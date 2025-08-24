@@ -1,0 +1,166 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Exchange API
+  description: Trading operations and account management
+  version: 0.0.1
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+paths:
+  /exchange:
+    post:
+      summary: Execute trading operations
+      description: |
+        All trading operations use POST /exchange with different action types.
+
+        Common request structure:
+        - `action`: Operation-specific object
+        - `nonce`: Timestamp in milliseconds
+        - `signature`: Cryptographic signature
+        - `vaultAddress`: Optional, for vault trading
+        - `expiresAfter`: Optional expiration timestamp
+
+        Action types include:
+        - order, cancel, modify: Order management
+        - updateLeverage, updateIsolatedMargin: Account settings
+        - usdSend, spotSend, withdraw3: Transfers
+        - twapOrder, twapCancel: TWAP orders
+        - And 15+ other operations
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: object
+                  description: Action-specific parameters
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        [
+                          order,
+                          cancel,
+                          cancelByCloid,
+                          scheduleCancel,
+                          modify,
+                          batchModify,
+                          updateLeverage,
+                          updateIsolatedMargin,
+                          usdSend,
+                          spotSend,
+                          withdraw3,
+                          usdClassTransfer,
+                          sendAsset,
+                          cDeposit,
+                          cWithdraw,
+                          tokenDelegate,
+                          vaultTransfer,
+                          approveAgent,
+                          approveBuilderFee,
+                          twapOrder,
+                          twapCancel,
+                          reserveRequestWeight,
+                          noop,
+                        ]
+                  required:
+                    - type
+                nonce:
+                  type: integer
+                  description: Current timestamp in milliseconds
+                signature:
+                  type: object
+                  description: Cryptographic signature
+                vaultAddress:
+                  type: string
+                  description: Vault address for vault trading
+                expiresAfter:
+                  type: integer
+                  description: Request expiration timestamp
+              required:
+                - action
+                - nonce
+                - signature
+
+      responses:
+        "200":
+          description: Success or error response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [ok]
+                      response:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            description: Action type
+                          data:
+                            type: object
+                            description: Response data
+                        required:
+                          - type
+                    required:
+                      - status
+                      - response
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [err]
+                      response:
+                        type: string
+                        description: Error message
+                    required:
+                      - status
+                      - response
+
+components:
+  schemas:
+    BaseAction:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Action type identifier
+      required:
+        - type
+
+    OrderKeys:
+      description: |
+        Order parameter keys (for order, modify actions):
+        - a: asset index (integer)
+        - b: isBuy (boolean) 
+        - p: price (string)
+        - s: size (string)
+        - r: reduceOnly (boolean)
+        - t: type object (limit or trigger)
+        - c: cloid - client order ID (optional string)
+      type: object
+
+    CancelKeys:
+      description: |
+        Cancel parameter keys:
+        - a: asset index (integer)
+        - o: order ID (integer)
+      type: object
+
+    ResponseTypes:
+      description: |
+        Common response types:
+        - order: Order placement result
+        - cancel: Cancellation result  
+        - default: Generic success
+        - twapOrder: TWAP order result
+        - And others matching action types
+      type: string

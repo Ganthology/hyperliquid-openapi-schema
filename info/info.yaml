@@ -1,0 +1,1854 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid User Orders API
+  description: API endpoints for user orders and fills
+  version: 0.0.1
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+paths:
+  # allMids
+  /info:
+    post:
+      summary: Retrieve all mids for all actively traded coins (if the book is empty, the last trade price will be used as a fallback)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [allMids]
+              required:
+                - type
+            example:
+              type: allMids
+      responses:
+        '200':
+          description: A successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "../components.yaml#/components/schemas/FloatString"
+              example:
+                APE: "4.36255"
+                ARB: "1.22965"
+                ATOM: "11.2585"
+                AVAX: "18.3695"
+  # openOrders
+  /info:
+    post:
+      summary: Get user open orders
+      description: Retrieve a user's open orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [openOrders]
+                user:
+                  type: string
+                  description: User's Ethereum address
+              required:
+                - type
+                - user
+            example:
+              type: openOrders
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    coin:
+                      type: string
+                    limitPx:
+                      type: string
+                      description: Limit price
+                    oid:
+                      type: integer
+                    side:
+                      type: string
+                      enum: [B, A]  # Buy or Ask
+                    sz:
+                      type: string
+                      description: Size, in units of coin
+                    timestamp:
+                      type: integer
+                  required:
+                    - coin
+                    - limitPx
+                    - oid
+                    - side
+                    - sz
+                    - timestamp
+  # frontendOpenOrders
+  /info:
+    post:
+      summary: Get user open orders (with frontend info)
+      description: Retrieve a user's open orders with additional frontend info
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [frontendOpenOrders]
+                user:
+                  type: string
+                  description: User's Ethereum address
+              required:
+                - type
+                - user
+            example:
+              type: openOrders
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    coin:
+                      type: string
+                    isPositionTpsl:
+                      type: boolean
+                    isTrigger:
+                      type: boolean
+                    limitPx:
+                      type: string
+                      description: Limit price
+                    oid:
+                      type: integer
+                    orderType:
+                      # "Limit"
+                      # TODO: Find out the enum values
+                      type: string
+                    origSz:
+                      type: string
+                      description: Original size, in units of coin
+                    reduceOnly:
+                      type: boolean
+                    side:
+                      type: string
+                      enum: [B, A]  # Buy or Ask
+                    sz:
+                      type: string
+                      description: Size, in units of coin
+                    timestamp:
+                      type: integer
+                    triggerCondition:
+                      type: string
+                      # TODO: Find out the enum values
+                    triggerPx:
+                      type: string
+                      description: Trigger price
+                  required:
+                    - coin
+                    - isPositionTpsl
+                    - isTrigger
+                    - limitPx
+                    - oid
+                    - orderType
+                    - origSz
+                    - reduceOnly
+                    - side
+                    - sz
+                    - timestamp
+
+  # userFills
+  /info:
+    post:
+      summary: Get user fills
+      description: Retrieve a user's trade fills (At most 2_000 most recent fills)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFills]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                aggregateByTime:
+                  type: boolean
+                  description: When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders will not be aggregated.
+              required:
+                - type
+                - user
+            example:
+              type: userFills
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    closedPnl:
+                      type: string
+                    coin:
+                      type: string
+                      description: Coin symbol, e.g. "BTC" and for Spot fill, e.g. "@107"
+                    crossed:
+                      type: boolean
+                    dir: 
+                      type: string
+                      # TODO: Find out the enum values
+                    oid:
+                      type: integer
+                    px:
+                      type: string
+                      description: Price
+                    side:
+                      type: string
+                      enum: [B, A] # Buy or Ask
+                    startPosition:
+                      type: string
+                    sz:
+                      type: string
+                      description: Size, in units of coin
+                    time:
+                      type: integer
+                    fee:
+                      type: string
+                    feeToken:
+                      type: string
+                    builderFee:
+                      type: string
+                      description: Builder fee, optional and will not be present if 0
+                    tid:
+                      type: integer
+                    hash:
+                      type: string
+                  required:
+                    - closedPnl
+                    - coin
+                    - crossed
+                    - dir
+                    - oid
+                    - px
+                    - side
+                    - startPosition
+                    - sz
+                    - time
+                    - fee
+                    - feeToken
+                    - tid
+                    - hash
+
+  # userFillsByTime
+  /info:
+    post:
+      summary: Get user fills by time
+      description: Retrieve a user's trade fills within a time range (At most 2_000 fills per response, and only 10_000 most recentfills are available)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFillsByTime]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                startTime:
+                  type: integer
+                  description: Start time in milliseconds, inclusive
+                endTime:
+                  type: integer
+                  description: End time in milliseconds, inclusive. Default to current time.
+                aggregateByTime:
+                  type: boolean
+                  description: When true, partial fills are combined when a crossing order gets filled by multiple different resting orders. Resting orders filled by multiple crossing orders will not be aggregated.
+              required:
+                - type
+                - user
+                - startTime
+            example:
+              type: userFillsByTime
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+              startTime: 1681222254710
+              endTime: 1681222254710
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    closedPnl:
+                      type: string
+                    coin:
+                      type: string
+                      description: Coin symbol, e.g. "BTC" and for Spot fill, e.g. "@107"
+                    crossed:
+                      type: boolean
+                    dir:
+                      type: string
+                      # TODO: Find out the enum values
+                    oid:
+                      type: integer
+                    px:
+                      type: string
+                      description: Price
+                    side:
+                      type: string
+                      enum: [B, A] # Buy or Ask
+                    startPosition:
+                      type: string
+                    sz:
+                      type: string
+                      description: Size, in units of coin
+                    time:
+                      type: integer
+                    fee:
+                      type: string
+                    feeToken:
+                      type: string
+                    builderFee:
+                      type: string
+                      description: Builder fee, optional and will not be present if 0
+                    tid:
+                      type: integer
+                    hash:
+                      type: string
+                  required:
+                    - closedPnl
+                    - coin
+                    - crossed
+                    - dir
+                    - oid
+                    - px
+                    - side
+                    - startPosition
+                    - sz
+                    - time
+                    - fee
+                    - feeToken
+                    - tid
+                    - hash
+
+  # userRateLimit
+  /info:
+    post:
+      summary: Get user rate limit
+      description: Retrieve user's current rate limit status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userRateLimit]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: userRateLimit
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cumVlm:
+                    type: string
+                  nRequestsUsed:
+                    type: integer
+                  nRequestsCap:
+                    type: integer
+
+  # orderStatus
+  /info:
+    post:
+      summary: Get order status
+      description: Query order status by order ID or cloid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                type:
+                  type: string
+                  enum: [orderStatus]
+                oid:
+                  oneOf:
+                    # u64 order id
+                    - type: integer
+                    # 16-byte hex string client order id
+                    - type: string
+                  description: Either u64 order id or 16-byte hex string client order id
+              required:
+                - user
+                - type
+                - oid
+            example:
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+              type: orderStatus
+              oid: 12345
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: Order found
+                    properties:
+                      status:
+                        type: string
+                        enum: [order]
+                      order:
+                        type: object
+                        properties:
+                          order:
+                            type: object
+                            properties:
+                              coin:
+                                type: string
+                              side:
+                                type: string
+                                enum: [B, A] # Buy or Ask
+                              limitPx:
+                                type: string
+                                description: Limit price
+                              sz:
+                                type: string
+                                description: Size, in units of coin
+                              oid:
+                                type: integer
+                              timestamp:
+                                type: integer
+                              triggerCondition:
+                                # TODO: find out actual enum values
+                                type: string
+                              isTrigger:
+                                type: boolean
+                              triggerPx:
+                                type: string
+                                description: Trigger price
+                              children:
+                                type: array
+                              isPositionTpsl:
+                                type: boolean
+                              reduceOnly:
+                                type: boolean
+                              orderType:
+                                # TODO: find out actual enum values
+                                type: string
+                              origSz:
+                                type: string
+                                description: Original size, in units of coin
+                              tid:
+                                # TODO: find out actual enum values
+                                type: string
+                              cloid:
+                                type: integer
+                                nullable: true
+                          status:
+                            # TODO: Fill with the actual enum with corresponding description (https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#query-order-status-by-oid-or-cloid)
+                            enum: [open, filled, cancelled, rejected]
+                          statusTimestamp:
+                            type: integer
+                  - type: object
+                    description: Missing order
+                    properties:
+                      status:
+                        type: string
+                        enum: [unknownOid]
+  # l2Book
+  /info:
+    post:
+      summary: Get L2 book snapshot
+      description: Retrieve the L2 book for a given coin, at most 20 levels per side
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [l2Book]
+                coin:
+                  type: string
+                nSigFigs:
+                  type: integer
+                  description: Optional field to aggregate levels to nSigFigs significant figures. Valid values are 2, 3, 4, 5, and null, which means full precision
+                mantissa:
+                  type: integer
+                  description: Optional field to aggregate levels. This field is only allowed if nSigFigs is 5. Accepts values of 1, 2 or 5.
+              required:
+                - type
+                - coin
+            example:
+              type: l2Book
+              coin: "BTC"
+              nSigFigs: 2
+              mantissa: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coin:
+                    type: string
+                  time:
+                    type: integer
+                  levels:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          px:
+                            type: string
+                            description: Price
+                          sz:
+                            type: string
+                            description: Size
+                          n:
+                            type: integer
+                            description: Number of levels
+                        required:
+                          - px
+                          - sz
+                          - n
+            example:
+              type: l2Book
+              coin: "BTC"
+              time: 1754450974231
+              levels:
+                - - px: "113377.0"
+                    sz: "7.6699"
+                    n: 17
+                - px: "113376.0"
+                  sz: "4.13714"
+                  n: 8
+                - px: "113397.0"
+                  sz: "0.11543"
+                  n: 3
+  # candleSnapshot
+  /info:
+    post:
+      summary: Get candle snapshot
+      description: Only the most recent 5000 candles are available.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [candleSnapshot]
+                req:
+                  type: object
+                  properties:
+                    coin:
+                      type: string
+                    interval:
+                      type: string
+                      enum: ["1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "8h", "12h", "1d", "3d", "1w", "1M"]
+                    startTime:
+                      type: integer
+                      description: Start time in milliseconds
+                    endTime:
+                      type: integer
+                      description: End time in milliseconds
+              required:
+                - type
+                - req
+            example:
+              type: candleSnapshot
+              req:
+                coin: "BTC"
+                interval: "1m"
+                startTime: 1754450974231
+                endTime: 1754450974231
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                      T:
+                        type: integer
+                        description: Timestamp
+                      c:
+                        type: string
+                        description: Close price
+                      h:
+                        type: string
+                        description: High price
+                      i:
+                        type: string
+                        description: Interval
+                      l:
+                        type: string
+                        description: Low price
+                      n:
+                        type: integer
+                        description: Number of candles
+                      o:
+                        type: string
+                        description: Open price
+                      s:
+                        type: string
+                        description: Symbol
+                      t:
+                        type: integer
+                        description: Start time
+                      v:
+                        type: string
+                        description: Volume
+                  required:
+                    - T
+                    - c
+                    - h
+                    - i
+                    - l
+                    - n
+                    - o
+                    - s
+                    - t
+                    - v
+
+  # maxBuilderFee
+  /info:
+    post:
+      summary: Get max builder fee
+      description: Retrieve the max builder fee for a given coin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [maxBuilderFee]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                builder:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+                - builder
+            example:
+              type: maxBuilderFee
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+              builder: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: integer
+                description: Maximum fee approved in tenths of a basis point i.e. 1 means 0.001%
+
+  # historicalOrders
+  /info:
+    post:
+      summary: Get historical orders
+      description: Retrieve a user's historical orders, at most 2000 most recent historical orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [historicalOrders]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: historicalOrders
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order:
+                      type: object
+                      properties:
+                        coin:
+                          type: string
+                        side:
+                          type: string
+                          enum: [B, A] # Buy or Ask
+                        limitPx:
+                          type: string
+                          description: Limit price
+                        sz:
+                          type: string
+                        oid:
+                          type: integer
+                        timestamp:
+                          type: integer
+                        triggerCondition:
+                          type: string
+                          # TODO: find out actual enum values
+                        isTrigger:
+                          type: boolean
+                        triggerPx:
+                          type: string
+                          description: Trigger price
+                        children:
+                          type: array
+                        isPositionTpsl:
+                          type: boolean
+                        reduceOnly:
+                          type: boolean
+                        orderType:
+                          type: string
+                          # TODO: find out actual enum values
+                        origSz:
+                          type: string
+                          description: Original size, in units of coin
+                        tif:
+                          type: string
+                          # TODO: find out actual enum values
+                        cloid:
+                          type: integer
+                          nullable: true
+                    status:
+                      type: string
+                      enum: ["filled", "open", "canceled", "triggered", "rejected", "marginCanceled"]
+                    statusTimestamp:
+                      type: integer
+
+  # userTwapSliceFills
+  /info:
+    post:
+      summary: Get user TWAP slice fills
+      description: Retrieve a user's TWAP slice fills, at most 2000 most recent TWAP slice fills
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userTwapSliceFills]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: userTwapSliceFills
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    fill:
+                      type: object
+                      properties:
+                        closedPnl:
+                          type: string
+                        coin:
+                          type: string
+                        crossed:
+                          type: boolean
+                        dir:
+                          type: string
+                          # TODO: find out actual enum values
+                        hash:
+                          type: string
+                        oid:
+                          type: integer
+                        px:
+                          type: string
+                        side:
+                          type: string
+                          enum: [B, A] # Buy or Ask
+                        startPosition:
+                          type: string
+                        sz:
+                          type: string
+                        time:
+                          type: integer
+                        fee:
+                          type: string
+                        feeToken:
+                          type: string
+                        tid:
+                          type: integer
+                    twapId:
+                      type: integer
+  # subAccounts
+  /info:
+    post:
+      summary: Get sub accounts
+      description: Retrieve a user's sub accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [subAccounts]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: subAccounts
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    subAccountUser:
+                      type: string
+                    master:
+                      type: string
+                    clearinghouseState:
+                      type: object
+                      properties:
+                        marginSummary:
+                          type: object
+                          properties:
+                            accountValue:
+                              type: string
+                            totalNtlPos:
+                              type: string
+                            totalRawUsd:
+                              type: string
+                            totalMarginUsed:
+                              type: string
+                        crossMarginSummary:
+                          type: object
+                          properties:
+                            accountValue:
+                              type: string
+                            totalNtlPos:
+                              type: string
+                            totalRawUsd:
+                              type: string
+                            totalMarginUsed:
+                              type: string
+                        crossMaintenanceMarginUsed:
+                          type: string
+                        withdrawable:
+                          type: string
+                        assetPositions:
+                          type: array
+                        time:
+                          type: integer
+                    spotState:
+                      type: object
+                      properties:
+                        balances:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              coin:
+                                type: string
+                              token:
+                                type: integer
+                              total:
+                                type: string
+                              hold:
+                                type: string
+                              entryNtl:
+                                type: string
+
+  # vaultDetails
+  /info:
+    post:
+      summary: Get vault details
+      description: Retrieve a user's vault details
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [vaultDetails]
+                vaultAddress:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - vaultAddress
+            example:
+              type: vaultDetails
+              vaultAddress: "0x1234567890abcdef1234567890abcdef12345678"
+              user: "0x1234567890abcdef1234567890abcdef1234568"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string  
+                  vaultAddress:
+                    type: string
+                  leader:
+                    type: string
+                  description:
+                    type: string
+                  portfolio:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          accountValueHistory:
+                            type: array
+                            items:
+                              type: array
+                              items:
+                                type: array
+                                items:
+                                  type: [integer, string]
+                          pnlHistory:
+                            type: array
+                            items:
+                              type: array
+                              items:
+                                type: [integer, string]
+                          vlm:
+                            type: string
+                  apr:
+                    type: number
+                  followerState:
+                    type: object
+                    nullable: true
+                    properties:
+                      user:
+                        type: string
+                      vaultEquity:
+                        type: string
+                      pnl:
+                        type: string
+                      allTimePnl:
+                        type: string
+                        daysFollowing:
+                        type: integer
+                      vaultEntryTime:
+                        type: integer
+                      lockupUntil:
+                        type: integer
+                  followers:
+                    type: object
+                    properties:
+                      user:
+                        type: string
+                      vaultEquity:
+                        type: string
+                      pnl:
+                        type: string
+                      allTimePnl:
+                        type: string
+                        daysFollowing:
+                        type: integer
+                      vaultEntryTime:
+                        type: integer
+                      lockupUntil:
+                        type: integer
+                  maxDistributable:
+                    type: number
+                  maxWithdrawable:
+                    type: number
+                  isClosed:
+                    type: boolean
+                  relationship:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [parent, follower]
+                      data:
+                        type: object
+                        properties:
+                          childAddresses:
+                            type: array
+                            items:
+                              type: string
+                  allowDeposits:
+                    type: boolean
+                  alwaysCloseOnWithdraw:
+                    type: boolean
+
+
+  # userVaultEquities
+  /info:
+    post:
+      summary: Get user vault equities
+      description: Retrieve a user's vault equities
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userVaultEquities]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: userVaultEquities
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    vaultAddress:
+                      type: string
+                    equity:
+                      type: string
+
+  # userRole
+  /info:
+    post:
+      summary: Get user role
+      description: Retrieve a user's role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userRole]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: userRole
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    enum: [missing, user, agent, vault, subAccount]
+
+  # portfolio
+  /info:
+    post:
+      summary: Get portfolio
+      description: Retrieve a user's portfolio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [portfolio]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: portfolio
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  minItems: 2
+                  maxItems: 2
+                  items:
+                    oneOf:
+                      # First item: interval string
+                      - type: string
+                        enum: ["day", "week", "month", "allTime", "perpDay", "perpWeek", "perpMonth", "perpAllTime"]
+                      # Second item: portfolio data object
+                      - type: object
+                        properties:
+                          accountValueHistory:
+                            type: array
+                            items:
+                              type: array
+                              minItems: 2
+                              maxItems: 2
+                              items:
+                                oneOf:
+                                  - type: integer
+                                    description: Timestamp in milliseconds
+                                  - type: string
+                                    description: Account value
+                          pnlHistory:
+                            type: array
+                            items:
+                              type: array
+                              minItems: 2
+                              maxItems: 2
+                              items:
+                                oneOf:
+                                  - type: integer
+                                    description: Timestamp in milliseconds
+                                  - type: string
+                                    description: PnL value
+                          vlm:
+                            type: string
+                            description: Volume
+                        required:
+                          - accountValueHistory
+                          - pnlHistory
+                          - vlm
+              example:
+                - ["day", {
+                    "accountValueHistory": [[1741886630493, "0.0"], [1741895270493, "0.0"]],
+                    "pnlHistory": [[1741886630493, "0.0"], [1741895270493, "0.0"]],
+                    "vlm": "0.0"
+                  }]
+                - ["week", {
+                    "accountValueHistory": [[1741886630493, "0.0"], [1741895270493, "0.0"]],
+                    "pnlHistory": [[1741886630493, "0.0"], [1741895270493, "0.0"]],
+                    "vlm": "0.0"
+                  }]
+
+  # referral
+  /info:
+    post:
+      summary: Get referral
+      description: Retrieve a user's referral
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [referral]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: referral
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  referredBy:
+                    type: object
+                    properties:
+                      referrer:
+                        type: string
+                        description: Address in 42-character hexadecimal format
+                      code:
+                        type: string
+                        description: Referral code
+                    required:
+                      - referrer
+                      - code
+                  cumVlm:
+                    type: string
+                    description: Cumulative volume
+                  unclaimedRewards:
+                    type: string
+                    description: Unclaimed rewards amount
+                  claimedRewards:
+                    type: string
+                    description: Claimed rewards amount
+                  builderRewards:
+                    type: string
+                    description: Builder rewards amount
+                  referrerState:
+                    type: object
+                    properties:
+                      stage:
+                        type: string
+                        description: Current stage of referrer state
+                      data:
+                        type: object
+                        properties:
+                          code:
+                            type: string
+                            description: Referrer code
+                          referralStates:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                cumVlm:
+                                  type: string
+                                  description: Cumulative volume for this referral
+                                cumRewardedFeesSinceReferred:
+                                  type: string
+                                  description: Cumulative rewarded fees since referred
+                                cumFeesRewardedToReferrer:
+                                  type: string
+                                  description: Cumulative fees rewarded to referrer
+                                timeJoined:
+                                  type: integer
+                                  description: Timestamp when user joined
+                                user:
+                                  type: string
+                                  description: Address in 42-character hexadecimal format
+                              required:
+                                - cumVlm
+                                - cumRewardedFeesSinceReferred
+                                - cumFeesRewardedToReferrer
+                                - timeJoined
+                                - user
+                        required:
+                          - code
+                          - referralStates
+                    required:
+                      - stage
+                      - data
+                  rewardHistory:
+                    type: array
+                    description: Legacy reward history (new claimed rewards are in nonFundingLedgerUpdate)
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: integer
+                          description: Timestamp of reward
+                        amount:
+                          type: string
+                          description: Reward amount
+                required:
+                  - referredBy
+                  - cumVlm
+                  - unclaimedRewards
+                  - claimedRewards
+                  - builderRewards
+                  - referrerState
+                  - rewardHistory
+              example:
+                referredBy:
+                  referrer: "0x5ac99df645f3414876c816caa18b2d234024b487"
+                  code: "TESTNET"
+                cumVlm: "149428030.6628420055"
+                unclaimedRewards: "11.047361"
+                claimedRewards: "22.743781"
+                builderRewards: "0.027802"
+                referrerState:
+                  stage: "ready"
+                  data:
+                    code: "TEST"
+                    referralStates:
+                      - cumVlm: "960652.017122"
+                        cumRewardedFeesSinceReferred: "196.838825"
+                        cumFeesRewardedToReferrer: "19.683748"
+                        timeJoined: 1679425029416
+                        user: "0x11af2b93dcb3568b7bf2b6bd6182d260a9495728"
+                      - cumVlm: "438278.672653"
+                        cumRewardedFeesSinceReferred: "97.628107"
+                        cumFeesRewardedToReferrer: "9.762562"
+                        timeJoined: 1679423947882
+                        user: "0x3f69d170055913103a034a418953b8695e4e42fa"
+                rewardHistory: []
+
+  # userFees
+  /info:
+    post:
+      summary: Get user fees
+      description: Retrieve a user's fees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFees]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: userFees
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dailyUserVlm:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          description: Date in YYYY-MM-DD format
+                        userCross:
+                          type: string
+                          description: User cross volume
+                        userAdd:
+                          type: string
+                          description: User add volume
+                        exchange:
+                          type: string
+                          description: Exchange volume
+                      required:
+                        - date
+                        - userCross
+                        - userAdd
+                        - exchange
+                  feeSchedule:
+                    type: object
+                    properties:
+                      cross:
+                        type: string
+                        description: Cross fee rate
+                      add:
+                        type: string
+                        description: Add fee rate
+                      spotCross:
+                        type: string
+                        description: Spot cross fee rate
+                      spotAdd:
+                        type: string
+                        description: Spot add fee rate
+                      tiers:
+                        type: object
+                        properties:
+                          vip:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                ntlCutoff:
+                                  type: string
+                                  description: Notional cutoff threshold
+                                cross:
+                                  type: string
+                                  description: VIP cross fee rate
+                                add:
+                                  type: string
+                                  description: VIP add fee rate
+                                spotCross:
+                                  type: string
+                                  description: VIP spot cross fee rate
+                                spotAdd:
+                                  type: string
+                                  description: VIP spot add fee rate
+                              required:
+                                - ntlCutoff
+                                - cross
+                                - add
+                                - spotCross
+                                - spotAdd
+                          mm:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                makerFractionCutoff:
+                                  type: string
+                                  description: Maker fraction cutoff threshold
+                                add:
+                                  type: string
+                                  description: Market maker add fee rate
+                              required:
+                                - makerFractionCutoff
+                                - add
+                        required:
+                          - vip
+                          - mm
+                      referralDiscount:
+                        type: string
+                        description: Referral discount rate
+                      stakingDiscountTiers:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            bpsOfMaxSupply:
+                              type: string
+                              description: Basis points of max supply threshold
+                            discount:
+                              type: string
+                              description: Staking discount rate
+                          required:
+                            - bpsOfMaxSupply
+                            - discount
+                    required:
+                      - cross
+                      - add
+                      - spotCross
+                      - spotAdd
+                      - tiers
+                      - referralDiscount
+                      - stakingDiscountTiers
+                  userCrossRate:
+                    type: string
+                    description: User's cross fee rate
+                  userAddRate:
+                    type: string
+                    description: User's add fee rate
+                  userSpotCrossRate:
+                    type: string
+                    description: User's spot cross fee rate
+                  userSpotAddRate:
+                    type: string
+                    description: User's spot add fee rate
+                  activeReferralDiscount:
+                    type: string
+                    description: Active referral discount rate
+                  trial:
+                    type: string
+                    nullable: true
+                    description: Trial information
+                  feeTrialReward:
+                    type: string
+                    description: Fee trial reward amount
+                  nextTrialAvailableTimestamp:
+                    type: integer
+                    nullable: true
+                    description: Next trial available timestamp
+                  stakingLink:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: Type of staking link
+                      stakingUser:
+                        type: string
+                        description: Address in 42-character hexadecimal format
+                    required:
+                      - type
+                      - stakingUser
+                  activeStakingDiscount:
+                    type: object
+                    properties:
+                      bpsOfMaxSupply:
+                        type: string
+                        description: Basis points of max supply
+                      discount:
+                        type: string
+                        description: Active staking discount rate
+                    required:
+                      - bpsOfMaxSupply
+                      - discount
+                required:
+                  - dailyUserVlm
+                  - feeSchedule
+                  - userCrossRate
+                  - userAddRate
+                  - userSpotCrossRate
+                  - userSpotAddRate
+                  - activeReferralDiscount
+                  - trial
+                  - feeTrialReward
+                  - nextTrialAvailableTimestamp
+                  - stakingLink
+                  - activeStakingDiscount
+              example:
+                dailyUserVlm:
+                  - date: "2025-05-23"
+                    userCross: "0.0"
+                    userAdd: "0.0"
+                    exchange: "2852367.0770729999"
+                feeSchedule:
+                  cross: "0.00045"
+                  add: "0.00015"
+                  spotCross: "0.0007"
+                  spotAdd: "0.0004"
+                  tiers:
+                    vip:
+                      - ntlCutoff: "5000000.0"
+                        cross: "0.0004"
+                        add: "0.00012"
+                        spotCross: "0.0006"
+                        spotAdd: "0.0003"
+                    mm:
+                      - makerFractionCutoff: "0.005"
+                        add: "-0.00001"
+                  referralDiscount: "0.04"
+                  stakingDiscountTiers:
+                    - bpsOfMaxSupply: "0.0"
+                      discount: "0.0"
+                    - bpsOfMaxSupply: "0.0001"
+                      discount: "0.05"
+                userCrossRate: "0.000315"
+                userAddRate: "0.000105"
+                userSpotCrossRate: "0.00049"
+                userSpotAddRate: "0.00028"
+                activeReferralDiscount: "0.0"
+                trial: null
+                feeTrialReward: "0.0"
+                nextTrialAvailableTimestamp: null
+                stakingLink:
+                  type: "tradingUser"
+                  stakingUser: "0x54c049d9c7d3c92c2462bf3d28e083f3d6805061"
+                activeStakingDiscount:
+                  bpsOfMaxSupply: "4.7577998927"
+                  discount: "0.3"
+
+  # delegations
+  /info:
+    post:
+      summary: Get delegations
+      description: Retrieve a user's delegations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [delegations]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: delegations
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    validator:
+                      type: string
+                      description: Validator address in 42-character hexadecimal format
+                    amount:
+                      type: string
+                      description: Delegated amount
+                    lockedUntilTimestamp:
+                      type: integer
+                      description: Timestamp when delegation is unlocked
+                  required:
+                    - validator
+                    - amount
+                    - lockedUntilTimestamp
+              example:
+                - validator: "0x5ac99df645f3414876c816caa18b2d234024b487"
+                  amount: "12060.16529862"
+                  lockedUntilTimestamp: 1735466781353
+
+  # delegatorSummary
+  /info:
+    post:
+      summary: Get delegator summary
+      description: Retrieve a user's staking/delegation summary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [delegatorSummary]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: delegatorSummary
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  delegated:
+                    type: string
+                    description: Total delegated amount
+                  undelegated:
+                    type: string
+                    description: Total undelegated amount
+                  totalPendingWithdrawal:
+                    type: string
+                    description: Total pending withdrawal amount
+                  nPendingWithdrawals:
+                    type: integer
+                    description: Number of pending withdrawals
+                required:
+                  - delegated
+                  - undelegated
+                  - totalPendingWithdrawal
+                  - nPendingWithdrawals
+              example:
+                delegated: "12060.16529862"
+                undelegated: "0.0"
+                totalPendingWithdrawal: "0.0"
+                nPendingWithdrawals: 0
+
+  # delegatorHistory
+  /info:
+    post:
+      summary: Get delegator history
+      description: Retrieve a user's staking/delegation history
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [delegatorHistory]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: delegatorHistory
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    time:
+                      type: integer
+                      description: Timestamp of the delegation action
+                    hash:
+                      type: string
+                      description: Transaction hash
+                    delta:
+                      type: object
+                      properties:
+                        delegate:
+                          type: object
+                          properties:
+                            validator:
+                              type: string
+                              description: Validator address in 42-character hexadecimal format
+                            amount:
+                              type: string
+                              description: Delegation amount
+                            isUndelegate:
+                              type: boolean
+                              description: Whether this is an undelegation action
+                          required:
+                            - validator
+                            - amount
+                            - isUndelegate
+                      required:
+                        - delegate
+                  required:
+                    - time
+                    - hash
+                    - delta
+              example:
+                - time: 1735380381353
+                  hash: "0x55492465cb523f90815a041a226ba90147008d4b221a24ae8dc35a0dbede4ea4"
+                  delta:
+                    delegate:
+                      validator: "0x5ac99df645f3414876c816caa18b2d234024b487"
+                      amount: "10000.0"
+                      isUndelegate: false
+
+  # delegatorRewards
+  /info:
+    post:
+      summary: Get delegator rewards
+      description: Retrieve a user's staking/delegation rewards
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: 
+                  type: string
+                  enum: [delegatorRewards]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: delegatorRewards
+              user: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    time:
+                      type: integer
+                      description: Timestamp of the reward
+                    source:
+                      type: string
+                      enum: [delegation, commission]
+                      description: Source of the reward
+                    totalAmount:
+                      type: string
+                      description: Total reward amount
+                  required:
+                    - time
+                    - source
+                    - totalAmount
+              example:
+                - time: 1736726400073
+                  source: "delegation"
+                  totalAmount: "0.73117184"
+                - time: 1736726400073
+                  source: "commission"
+                  totalAmount: "130.76445876"

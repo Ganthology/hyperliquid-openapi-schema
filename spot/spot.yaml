@@ -1,0 +1,678 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Spot Trading API
+  description: API endpoints for spot trading data and token information
+  version: 0.0.1
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+paths:
+  # spotMeta
+  /info:
+    post:
+      summary: Retrieve spot metadata
+      description: Get tokens and universe information for spot trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [spotMeta]
+              required:
+                - type
+            example:
+              type: spotMeta
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Token name/symbol
+                        szDecimals:
+                          type: integer
+                          description: Size decimals for trading
+                        weiDecimals:
+                          type: integer
+                          description: Wei decimals for blockchain representation
+                        index:
+                          type: integer
+                          description: Token index
+                        tokenId:
+                          type: string
+                          description: Unique token identifier
+                        isCanonical:
+                          type: boolean
+                          description: Whether this is the canonical token
+                        evmContract:
+                          type: string
+                          nullable: true
+                          description: EVM contract address
+                        fullName:
+                          type: string
+                          nullable: true
+                          description: Full token name
+                      required:
+                        - name
+                        - szDecimals
+                        - weiDecimals
+                        - index
+                        - tokenId
+                        - isCanonical
+                        - evmContract
+                        - fullName
+                  universe:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Trading pair name
+                        tokens:
+                          type: array
+                          items:
+                            type: integer
+                          minItems: 2
+                          maxItems: 2
+                          description: Token indices [base, quote]
+                        index:
+                          type: integer
+                          description: Trading pair index
+                        isCanonical:
+                          type: boolean
+                          description: Whether this is the canonical pair
+                      required:
+                        - name
+                        - tokens
+                        - index
+                        - isCanonical
+                required:
+                  - tokens
+                  - universe
+              example:
+                tokens:
+                  - name: "USDC"
+                    szDecimals: 8
+                    weiDecimals: 8
+                    index: 0
+                    tokenId: "0x6d1e7cde53ba9467b783cb7c530ce054"
+                    isCanonical: true
+                    evmContract: null
+                    fullName: null
+                  - name: "PURR"
+                    szDecimals: 0
+                    weiDecimals: 5
+                    index: 1
+                    tokenId: "0xc1fb593aeffbeb02f85e0308e9956a90"
+                    isCanonical: true
+                    evmContract: null
+                    fullName: null
+                universe:
+                  - name: "PURR/USDC"
+                    tokens: [1, 0]
+                    index: 0
+                    isCanonical: true
+
+  # spotMetaAndAssetCtxs
+  /info:
+    post:
+      summary: Retrieve spot asset contexts
+      description: Get spot metadata and asset contexts including pricing information
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [spotMetaAndAssetCtxs]
+              required:
+                - type
+            example:
+              type: spotMetaAndAssetCtxs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 2
+                maxItems: 2
+                items:
+                  oneOf:
+                    # First item: meta information
+                    - type: object
+                      properties:
+                        tokens:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              szDecimals:
+                                type: integer
+                              weiDecimals:
+                                type: integer
+                              index:
+                                type: integer
+                              tokenId:
+                                type: string
+                              isCanonical:
+                                type: boolean
+                              evmContract:
+                                type: string
+                                nullable: true
+                              fullName:
+                                type: string
+                                nullable: true
+                            required:
+                              - name
+                              - szDecimals
+                              - weiDecimals
+                              - index
+                              - tokenId
+                              - isCanonical
+                              - evmContract
+                              - fullName
+                        universe:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              tokens:
+                                type: array
+                                items:
+                                  type: integer
+                                minItems: 2
+                                maxItems: 2
+                              index:
+                                type: integer
+                              isCanonical:
+                                type: boolean
+                            required:
+                              - name
+                              - tokens
+                              - index
+                              - isCanonical
+                      required:
+                        - tokens
+                        - universe
+                    # Second item: array of asset contexts
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          dayNtlVlm:
+                            type: string
+                            description: Daily notional volume
+                          markPx:
+                            type: string
+                            description: Mark price
+                          midPx:
+                            type: string
+                            description: Mid price
+                          prevDayPx:
+                            type: string
+                            description: Previous day price
+                        required:
+                          - dayNtlVlm
+                          - markPx
+                          - midPx
+                          - prevDayPx
+              example:
+                - tokens:
+                    - name: "USDC"
+                      szDecimals: 8
+                      weiDecimals: 8
+                      index: 0
+                      tokenId: "0x6d1e7cde53ba9467b783cb7c530ce054"
+                      isCanonical: true
+                      evmContract: null
+                      fullName: null
+                  universe:
+                    - name: "PURR/USDC"
+                      tokens: [1, 0]
+                      index: 0
+                      isCanonical: true
+                - - dayNtlVlm: "8906.0"
+                    markPx: "0.14"
+                    midPx: "0.209265"
+                    prevDayPx: "0.20432"
+
+  # spotClearinghouseState
+  /info:
+    post:
+      summary: Retrieve a user's token balances
+      description: See a user's token balances in their spot account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [spotClearinghouseState]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: spotClearinghouseState
+              user: "0x0000000000000000000000000000000000000000"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balances:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        coin:
+                          type: string
+                          description: Token symbol
+                        token:
+                          type: integer
+                          description: Token index
+                        hold:
+                          type: string
+                          description: Amount held in open orders
+                        total:
+                          type: string
+                          description: Total token balance
+                        entryNtl:
+                          type: string
+                          description: Entry notional value
+                      required:
+                        - coin
+                        - token
+                        - hold
+                        - total
+                        - entryNtl
+                required:
+                  - balances
+              example:
+                balances:
+                  - coin: "USDC"
+                    token: 0
+                    hold: "0.0"
+                    total: "14.625485"
+                    entryNtl: "0.0"
+                  - coin: "PURR"
+                    token: 1
+                    hold: "0"
+                    total: "2000"
+                    entryNtl: "1234.56"
+
+  # spotDeployState
+  /info:
+    post:
+      summary: Retrieve information about the Spot Deploy Auction
+      description: Get current state of spot token deployment auctions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [spotDeployState]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+              required:
+                - type
+                - user
+            example:
+              type: spotDeployState
+              user: "0x0000000000000000000000000000000000000000"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  states:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: integer
+                          description: Token index
+                        spec:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: Token name
+                            szDecimals:
+                              type: integer
+                              description: Size decimals
+                            weiDecimals:
+                              type: integer
+                              description: Wei decimals
+                          required:
+                            - name
+                            - szDecimals
+                            - weiDecimals
+                        fullName:
+                          type: string
+                          description: Full token name
+                        spots:
+                          type: array
+                          items:
+                            type: integer
+                          description: Associated spot markets
+                        maxSupply:
+                          type: number
+                          description: Maximum token supply
+                        hyperliquidityGenesisBalance:
+                          type: string
+                          description: Hyperliquidity genesis balance
+                        totalGenesisBalanceWei:
+                          type: string
+                          description: Total genesis balance in wei
+                        userGenesisBalances:
+                          type: array
+                          items:
+                            type: array
+                            minItems: 2
+                            maxItems: 2
+                            items:
+                              type: string
+                          description: Array of [address, balance] pairs
+                        existingTokenGenesisBalances:
+                          type: array
+                          items:
+                            type: array
+                            minItems: 2
+                            maxItems: 2
+                            items:
+                              oneOf:
+                                - type: integer
+                                - type: string
+                          description: Array of [tokenIndex, balance] pairs
+                      required:
+                        - token
+                        - spec
+                        - fullName
+                        - spots
+                        - maxSupply
+                        - hyperliquidityGenesisBalance
+                        - totalGenesisBalanceWei
+                        - userGenesisBalances
+                        - existingTokenGenesisBalances
+                  gasAuction:
+                    type: object
+                    properties:
+                      startTimeSeconds:
+                        type: integer
+                        description: Auction start time in seconds
+                      durationSeconds:
+                        type: integer
+                        description: Auction duration in seconds
+                      startGas:
+                        type: string
+                        description: Starting gas amount
+                      currentGas:
+                        type: string
+                        nullable: true
+                        description: Current gas amount
+                      endGas:
+                        type: string
+                        description: Ending gas amount
+                    required:
+                      - startTimeSeconds
+                      - durationSeconds
+                      - startGas
+                      - currentGas
+                      - endGas
+                required:
+                  - states
+                  - gasAuction
+              example:
+                states:
+                  - token: 150
+                    spec:
+                      name: "HYPE"
+                      szDecimals: 2
+                      weiDecimals: 8
+                    fullName: "Hyperliquid"
+                    spots: [107]
+                    maxSupply: 1000000000
+                    hyperliquidityGenesisBalance: "120000"
+                    totalGenesisBalanceWei: "100000000000000000"
+                    userGenesisBalances:
+                      - ["0xdddddddddddddddddddddddddddddddddddddddd", "428,062,211"]
+                    existingTokenGenesisBalances:
+                      - [1, "0"]
+                gasAuction:
+                  startTimeSeconds: 1733929200
+                  durationSeconds: 111600
+                  startGas: "181305.90046"
+                  currentGas: null
+                  endGas: "181291.247358"
+
+  # spotPairDeployAuctionStatus
+  /info:
+    post:
+      summary: Retrieve information about the Spot Pair Deploy Auction
+      description: Get status of the Dutch auction for spot pair deployments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [spotPairDeployAuctionStatus]
+              required:
+                - type
+            example:
+              type: spotPairDeployAuctionStatus
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  startTimeSeconds:
+                    type: integer
+                    description: Auction start time in seconds
+                  durationSeconds:
+                    type: integer
+                    description: Auction duration in seconds
+                  startGas:
+                    type: string
+                    description: Starting gas amount
+                  currentGas:
+                    type: string
+                    description: Current gas amount
+                  endGas:
+                    type: string
+                    nullable: true
+                    description: Ending gas amount
+                required:
+                  - startTimeSeconds
+                  - durationSeconds
+                  - startGas
+                  - currentGas
+                  - endGas
+              example:
+                startTimeSeconds: 1755468000
+                durationSeconds: 111600
+                startGas: "500.0"
+                currentGas: "500.0"
+                endGas: null
+
+  # tokenDetails
+  /info:
+    post:
+      summary: Retrieve information about a token
+      description: Get detailed information about a specific token including supply and genesis data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [tokenDetails]
+                tokenId:
+                  type: string
+                  description: Token ID in 34-character hexadecimal format
+              required:
+                - type
+                - tokenId
+            example:
+              type: tokenDetails
+              tokenId: "0x00000000000000000000000000000000"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Token name
+                  maxSupply:
+                    type: string
+                    description: Maximum token supply
+                  totalSupply:
+                    type: string
+                    description: Total token supply
+                  circulatingSupply:
+                    type: string
+                    description: Circulating token supply
+                  szDecimals:
+                    type: integer
+                    description: Size decimals
+                  weiDecimals:
+                    type: integer
+                    description: Wei decimals
+                  midPx:
+                    type: string
+                    description: Mid price
+                  markPx:
+                    type: string
+                    description: Mark price
+                  prevDayPx:
+                    type: string
+                    description: Previous day price
+                  genesis:
+                    type: object
+                    properties:
+                      userBalances:
+                        type: array
+                        items:
+                          type: array
+                          minItems: 2
+                          maxItems: 2
+                          items:
+                            type: string
+                        description: Array of [address, balance] pairs
+                      existingTokenBalances:
+                        type: array
+                        items:
+                          type: array
+                        description: Array of existing token balance pairs
+                    required:
+                      - userBalances
+                      - existingTokenBalances
+                  deployer:
+                    type: string
+                    description: Token deployer address
+                  deployGas:
+                    type: string
+                    description: Gas used for deployment
+                  deployTime:
+                    type: string
+                    description: Deployment timestamp
+                  seededUsdc:
+                    type: string
+                    description: USDC seeded for the token
+                  nonCirculatingUserBalances:
+                    type: array
+                    items:
+                      type: string
+                    description: Non-circulating user balances
+                  futureEmissions:
+                    type: string
+                    description: Future token emissions
+                required:
+                  - name
+                  - maxSupply
+                  - totalSupply
+                  - circulatingSupply
+                  - szDecimals
+                  - weiDecimals
+                  - midPx
+                  - markPx
+                  - prevDayPx
+                  - genesis
+                  - deployer
+                  - deployGas
+                  - deployTime
+                  - seededUsdc
+                  - nonCirculatingUserBalances
+                  - futureEmissions
+              example:
+                name: "TEST"
+                maxSupply: "1852229076.12716007"
+                totalSupply: "851681534.05516005"
+                circulatingSupply: "851681534.05516005"
+                szDecimals: 0
+                weiDecimals: 5
+                midPx: "3.2049"
+                markPx: "3.2025"
+                prevDayPx: "3.2025"
+                genesis:
+                  userBalances:
+                    - ["0x0000000000000000000000000000000000000001", "1000000000.0"]
+                    - ["0xffffffffffffffffffffffffffffffffffffffff", "1000000000.0"]
+                  existingTokenBalances: []
+                deployer: "0x0000000000000000000000000000000000000001"
+                deployGas: "100.0"
+                deployTime: "2024-06-05T10:50:59.434"
+                seededUsdc: "0.0"
+                nonCirculatingUserBalances: []
+                futureEmissions: "0.0"

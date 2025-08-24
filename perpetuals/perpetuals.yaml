@@ -1,0 +1,961 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Perpetuals API
+  description: API endpoints for perpetuals trading data and account management
+  version: 0.0.1
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+paths:
+  # perpDexs
+  /info:
+    post:
+      summary: Retrieve all perpetual dexs
+      description: Get a list of all available perpetual decentralized exchanges
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [perpDexs]
+              required:
+                - type
+            example:
+              type: perpDexs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: "null"
+                    - type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Short name of the dex
+                        full_name:
+                          type: string
+                          description: Full name of the dex
+                        deployer:
+                          type: string
+                          description: Address of the dex deployer
+                        oracle_updater:
+                          type: string
+                          nullable: true
+                          description: Oracle updater address
+                      required:
+                        - name
+                        - full_name
+                        - deployer
+                        - oracle_updater
+              example:
+                - null
+                - name: "test"
+                  full_name: "test dex"
+                  deployer: "0x5e89b26d8d66da9888c835c9bfcc2aa51813e152"
+                  oracle_updater: null
+
+  # meta
+  /info:
+    post:
+      summary: Retrieve perpetuals metadata
+      description: Get universe and margin tables for perpetuals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [meta]
+                dex:
+                  type: string
+                  description: Perp dex name. Defaults to the empty string which represents the first perp dex
+              required:
+                - type
+            example:
+              type: meta
+              dex: ""
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  universe:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Asset name
+                        szDecimals:
+                          type: integer
+                          description: Size decimals for the asset
+                        maxLeverage:
+                          type: integer
+                          description: Maximum leverage allowed
+                        onlyIsolated:
+                          type: boolean
+                          description: Whether only isolated margin is allowed
+                        isDelisted:
+                          type: boolean
+                          description: Whether the asset is delisted
+                      required:
+                        - name
+                        - szDecimals
+                        - maxLeverage
+                  marginTables:
+                    type: array
+                    items:
+                      type: array
+                      minItems: 2
+                      maxItems: 2
+                      items:
+                        oneOf:
+                          - type: integer
+                            description: Margin table ID
+                          - type: object
+                            properties:
+                              description:
+                                type: string
+                                description: Margin table description
+                              marginTiers:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    lowerBound:
+                                      type: string
+                                      description: Lower bound for this margin tier
+                                    maxLeverage:
+                                      type: integer
+                                      description: Maximum leverage for this tier
+                                  required:
+                                    - lowerBound
+                                    - maxLeverage
+                            required:
+                              - description
+                              - marginTiers
+                required:
+                  - universe
+                  - marginTables
+              example:
+                universe:
+                  - name: "BTC"
+                    szDecimals: 5
+                    maxLeverage: 50
+                  - name: "ETH"
+                    szDecimals: 4
+                    maxLeverage: 50
+                  - name: "HPOS"
+                    szDecimals: 0
+                    maxLeverage: 3
+                    onlyIsolated: true
+                marginTables:
+                  - - 50
+                    - description: ""
+                      marginTiers:
+                        - lowerBound: "0.0"
+                          maxLeverage: 50
+
+  # metaAndAssetCtxs
+  /info:
+    post:
+      summary: Retrieve perpetuals asset contexts
+      description: Get asset contexts including mark price, funding, open interest, etc.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [metaAndAssetCtxs]
+              required:
+                - type
+            example:
+              type: metaAndAssetCtxs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 2
+                maxItems: 2
+                items:
+                  oneOf:
+                    # First item: meta information
+                    - type: object
+                      properties:
+                        universe:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              szDecimals:
+                                type: integer
+                              maxLeverage:
+                                type: integer
+                              onlyIsolated:
+                                type: boolean
+                            required:
+                              - name
+                              - szDecimals
+                              - maxLeverage
+                      required:
+                        - universe
+                    # Second item: array of asset contexts
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          dayNtlVlm:
+                            type: string
+                            description: Daily notional volume
+                          funding:
+                            type: string
+                            description: Current funding rate
+                          impactPxs:
+                            type: array
+                            items:
+                              type: string
+                            minItems: 2
+                            maxItems: 2
+                            description: Impact prices [bid, ask]
+                          markPx:
+                            type: string
+                            description: Mark price
+                          midPx:
+                            type: string
+                            description: Mid price
+                          openInterest:
+                            type: string
+                            description: Open interest
+                          oraclePx:
+                            type: string
+                            description: Oracle price
+                          premium:
+                            type: string
+                            description: Premium
+                          prevDayPx:
+                            type: string
+                            description: Previous day price
+                        required:
+                          - dayNtlVlm
+                          - funding
+                          - impactPxs
+                          - markPx
+                          - midPx
+                          - openInterest
+                          - oraclePx
+                          - premium
+                          - prevDayPx
+              example:
+                - universe:
+                    - name: "BTC"
+                      szDecimals: 5
+                      maxLeverage: 50
+                    - name: "ETH"
+                      szDecimals: 4
+                      maxLeverage: 50
+                - - dayNtlVlm: "1169046.29406"
+                    funding: "0.0000125"
+                    impactPxs: ["14.3047", "14.3444"]
+                    markPx: "14.3161"
+                    midPx: "14.314"
+                    openInterest: "688.11"
+                    oraclePx: "14.32"
+                    premium: "0.00031774"
+                    prevDayPx: "15.322"
+
+  # clearinghouseState
+  /info:
+    post:
+      summary: Retrieve user's perpetuals account summary
+      description: See a user's open positions and margin summary for perpetuals trading
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [clearinghouseState]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                dex:
+                  type: string
+                  description: Perp dex name. Defaults to the empty string which represents the first perp dex
+              required:
+                - type
+                - user
+            example:
+              type: clearinghouseState
+              user: "0x0000000000000000000000000000000000000000"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assetPositions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        position:
+                          type: object
+                          properties:
+                            coin:
+                              type: string
+                              description: Asset symbol
+                            cumFunding:
+                              type: object
+                              properties:
+                                allTime:
+                                  type: string
+                                  description: All time cumulative funding
+                                sinceChange:
+                                  type: string
+                                  description: Funding since last change
+                                sinceOpen:
+                                  type: string
+                                  description: Funding since position opened
+                              required:
+                                - allTime
+                                - sinceChange
+                                - sinceOpen
+                            entryPx:
+                              type: string
+                              description: Entry price
+                            leverage:
+                              type: object
+                              properties:
+                                rawUsd:
+                                  type: string
+                                  description: Raw USD value
+                                type:
+                                  type: string
+                                  enum: [isolated, cross]
+                                  description: Leverage type
+                                value:
+                                  type: number
+                                  description: Leverage value
+                              required:
+                                - rawUsd
+                                - type
+                                - value
+                            liquidationPx:
+                              type: string
+                              description: Liquidation price
+                            marginUsed:
+                              type: string
+                              description: Margin used for this position
+                            maxLeverage:
+                              type: integer
+                              description: Maximum leverage allowed
+                            positionValue:
+                              type: string
+                              description: Current position value
+                            returnOnEquity:
+                              type: string
+                              description: Return on equity
+                            szi:
+                              type: string
+                              description: Signed size (positive for long, negative for short)
+                            unrealizedPnl:
+                              type: string
+                              description: Unrealized profit and loss
+                          required:
+                            - coin
+                            - cumFunding
+                            - entryPx
+                            - leverage
+                            - liquidationPx
+                            - marginUsed
+                            - maxLeverage
+                            - positionValue
+                            - returnOnEquity
+                            - szi
+                            - unrealizedPnl
+                        type:
+                          type: string
+                          enum: [oneWay]
+                          description: Position type
+                      required:
+                        - position
+                        - type
+                  crossMaintenanceMarginUsed:
+                    type: string
+                    description: Cross maintenance margin used
+                  crossMarginSummary:
+                    type: object
+                    properties:
+                      accountValue:
+                        type: string
+                        description: Account value for cross margin
+                      totalMarginUsed:
+                        type: string
+                        description: Total margin used for cross positions
+                      totalNtlPos:
+                        type: string
+                        description: Total notional position value for cross
+                      totalRawUsd:
+                        type: string
+                        description: Total raw USD value for cross
+                    required:
+                      - accountValue
+                      - totalMarginUsed
+                      - totalNtlPos
+                      - totalRawUsd
+                  marginSummary:
+                    type: object
+                    properties:
+                      accountValue:
+                        type: string
+                        description: Total account value
+                      totalMarginUsed:
+                        type: string
+                        description: Total margin used across all positions
+                      totalNtlPos:
+                        type: string
+                        description: Total notional position value
+                      totalRawUsd:
+                        type: string
+                        description: Total raw USD value
+                    required:
+                      - accountValue
+                      - totalMarginUsed
+                      - totalNtlPos
+                      - totalRawUsd
+                  time:
+                    type: integer
+                    description: Timestamp of the data
+                  withdrawable:
+                    type: string
+                    description: Amount available for withdrawal
+                required:
+                  - assetPositions
+                  - crossMaintenanceMarginUsed
+                  - crossMarginSummary
+                  - marginSummary
+                  - time
+                  - withdrawable
+              example:
+                assetPositions:
+                  - position:
+                      coin: "ETH"
+                      cumFunding:
+                        allTime: "514.085417"
+                        sinceChange: "0.0"
+                        sinceOpen: "0.0"
+                      entryPx: "2986.3"
+                      leverage:
+                        rawUsd: "-95.059824"
+                        type: "isolated"
+                        value: 20
+                      liquidationPx: "2866.26936529"
+                      marginUsed: "4.967826"
+                      maxLeverage: 50
+                      positionValue: "100.02765"
+                      returnOnEquity: "-0.0026789"
+                      szi: "0.0335"
+                      unrealizedPnl: "-0.0134"
+                    type: "oneWay"
+                crossMaintenanceMarginUsed: "0.0"
+                crossMarginSummary:
+                  accountValue: "13104.514502"
+                  totalMarginUsed: "0.0"
+                  totalNtlPos: "0.0"
+                  totalRawUsd: "13104.514502"
+                marginSummary:
+                  accountValue: "13109.482328"
+                  totalMarginUsed: "4.967826"
+                  totalNtlPos: "100.02765"
+                  totalRawUsd: "13009.454678"
+                time: 1708622398623
+                withdrawable: "13104.514502"
+
+  # userFunding or userNonFundingLedgerUpdates
+  /info:
+    post:
+      summary: Retrieve a user's funding history or non-funding ledger updates
+      description: Get funding history or non-funding ledger updates (deposits, transfers, withdrawals)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFunding, userNonFundingLedgerUpdates]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                startTime:
+                  type: integer
+                  description: Start time in milliseconds, inclusive
+                endTime:
+                  type: integer
+                  description: End time in milliseconds, inclusive. Defaults to current time
+              required:
+                - type
+                - user
+                - startTime
+            example:
+              type: userFunding
+              user: "0x0000000000000000000000000000000000000000"
+              startTime: 1681222254710
+              endTime: 1681222254710
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delta:
+                      type: object
+                      properties:
+                        coin:
+                          type: string
+                          description: Asset symbol
+                        fundingRate:
+                          type: string
+                          description: Funding rate applied
+                        szi:
+                          type: string
+                          description: Position size
+                        type:
+                          type: string
+                          enum: [funding]
+                          description: Type of ledger update
+                        usdc:
+                          type: string
+                          description: USDC amount change
+                      required:
+                        - coin
+                        - fundingRate
+                        - szi
+                        - type
+                        - usdc
+                    hash:
+                      type: string
+                      description: Transaction hash
+                    time:
+                      type: integer
+                      description: Timestamp
+                  required:
+                    - delta
+                    - hash
+                    - time
+              example:
+                - delta:
+                    coin: "ETH"
+                    fundingRate: "0.0000417"
+                    szi: "49.1477"
+                    type: "funding"
+                    usdc: "-3.625312"
+                  hash: "0xa166e3fa63c25663024b03f2e0da011a00307e4017465df020210d3d432e7cb8"
+                  time: 1681222254710
+
+  # fundingHistory
+  /info:
+    post:
+      summary: Retrieve historical funding rates
+      description: Get historical funding rates for a specific coin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [fundingHistory]
+                coin:
+                  type: string
+                  description: Coin symbol, e.g. "ETH"
+                startTime:
+                  type: integer
+                  description: Start time in milliseconds, inclusive
+                endTime:
+                  type: integer
+                  description: End time in milliseconds, inclusive. Defaults to current time
+              required:
+                - type
+                - coin
+                - startTime
+            example:
+              type: fundingHistory
+              coin: "ETH"
+              startTime: 1681222254710
+              endTime: 1681222254710
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    coin:
+                      type: string
+                      description: Asset symbol
+                    fundingRate:
+                      type: string
+                      description: Funding rate for this period
+                    premium:
+                      type: string
+                      description: Premium component
+                    time:
+                      type: integer
+                      description: Timestamp
+                  required:
+                    - coin
+                    - fundingRate
+                    - premium
+                    - time
+              example:
+                - coin: "ETH"
+                  fundingRate: "-0.00022196"
+                  premium: "-0.00052196"
+                  time: 1683849600076
+
+  # predictedFundings
+  /info:
+    post:
+      summary: Retrieve predicted funding rates for different venues
+      description: Get predicted funding rates across different trading venues
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [predictedFundings]
+              required:
+                - type
+            example:
+              type: predictedFundings
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  minItems: 2
+                  maxItems: 2
+                  items:
+                    oneOf:
+                      # First item: coin name
+                      - type: string
+                        description: Coin symbol
+                      # Second item: array of venue funding data
+                      - type: array
+                        items:
+                          type: array
+                          minItems: 2
+                          maxItems: 2
+                          items:
+                            oneOf:
+                              # First item: venue name
+                              - type: string
+                                description: Trading venue name
+                              # Second item: funding data
+                              - type: object
+                                properties:
+                                  fundingRate:
+                                    type: string
+                                    description: Predicted funding rate
+                                  nextFundingTime:
+                                    type: integer
+                                    description: Next funding time in milliseconds
+                                required:
+                                  - fundingRate
+                                  - nextFundingTime
+              example:
+                - - "AVAX"
+                  - - - "BinPerp"
+                      - fundingRate: "0.0001"
+                        nextFundingTime: 1733961600000
+                    - - "HlPerp"
+                      - fundingRate: "0.0000125"
+                        nextFundingTime: 1733958000000
+
+  # perpsAtOpenInterestCap
+  /info:
+    post:
+      summary: Query perps at open interest caps
+      description: Get list of perpetuals that are currently at their open interest caps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [perpsAtOpenInterestCap]
+              required:
+                - type
+            example:
+              type: perpsAtOpenInterestCap
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: Coin symbol at open interest cap
+              example:
+                - "BADGER"
+                - "CANTO"
+                - "FTM"
+                - "LOOM"
+                - "PURR"
+
+  # perpDeployAuctionStatus
+  /info:
+    post:
+      summary: Retrieve information about the Perp Deploy Auction
+      description: Get current status and parameters of the perpetual deployment auction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [perpDeployAuctionStatus]
+              required:
+                - type
+            example:
+              type: perpDeployAuctionStatus
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  startTimeSeconds:
+                    type: integer
+                    description: Auction start time in seconds
+                  durationSeconds:
+                    type: integer
+                    description: Auction duration in seconds
+                  startGas:
+                    type: string
+                    description: Starting gas amount
+                  currentGas:
+                    type: string
+                    description: Current gas amount
+                  endGas:
+                    type: string
+                    nullable: true
+                    description: Ending gas amount
+                required:
+                  - startTimeSeconds
+                  - durationSeconds
+                  - startGas
+                  - currentGas
+                  - endGas
+              example:
+                startTimeSeconds: 1747656000
+                durationSeconds: 111600
+                startGas: "500.0"
+                currentGas: "500.0"
+                endGas: null
+
+  # activeAssetData
+  /info:
+    post:
+      summary: Retrieve User's Active Asset Data
+      description: Get user's trading data for a specific asset including leverage and available amounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [activeAssetData]
+                user:
+                  type: string
+                  description: Address in 42-character hexadecimal format
+                coin:
+                  type: string
+                  description: Coin symbol, e.g. "ETH"
+              required:
+                - type
+                - user
+                - coin
+            example:
+              type: activeAssetData
+              user: "0xb65822a30bbaaa68942d6f4c43d78704faeabbbb"
+              coin: "APT"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: string
+                    description: User address
+                  coin:
+                    type: string
+                    description: Asset symbol
+                  leverage:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [cross, isolated]
+                        description: Leverage type
+                      value:
+                        type: number
+                        description: Leverage value
+                    required:
+                      - type
+                      - value
+                  maxTradeSzs:
+                    type: array
+                    items:
+                      type: string
+                    minItems: 2
+                    maxItems: 2
+                    description: Maximum trade sizes [bid, ask]
+                  availableToTrade:
+                    type: array
+                    items:
+                      type: string
+                    minItems: 2
+                    maxItems: 2
+                    description: Available amounts to trade [bid, ask]
+                  markPx:
+                    type: string
+                    description: Current mark price
+                required:
+                  - user
+                  - coin
+                  - leverage
+                  - maxTradeSzs
+                  - availableToTrade
+                  - markPx
+              example:
+                user: "0xb65822a30bbaaa68942d6f4c43d78704faeabbbb"
+                coin: "APT"
+                leverage:
+                  type: "cross"
+                  value: 3
+                maxTradeSzs: ["24836370.4400000013", "24836370.4400000013"]
+                availableToTrade: ["37019438.0284740031", "37019438.0284740031"]
+                markPx: "4.4716"
+
+  # perpDexLimits
+  /info:
+    post:
+      summary: Retrieve Builder-Deployed Perp Market Limits
+      description: Get trading limits for builder-deployed perpetual markets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [perpDexLimits]
+                dex:
+                  type: string
+                  description: Perp dex name of builder-deployed dex market. The empty string is not allowed
+              required:
+                - type
+                - dex
+            example:
+              type: perpDexLimits
+              dex: "testdex"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalOiCap:
+                    type: string
+                    description: Total open interest cap
+                  oiSzCapPerPerp:
+                    type: string
+                    description: Open interest size cap per perpetual
+                  maxTransferNtl:
+                    type: string
+                    description: Maximum transfer notional amount
+                  coinToOiCap:
+                    type: array
+                    items:
+                      type: array
+                      minItems: 2
+                      maxItems: 2
+                      items:
+                        type: string
+                      description: [coin, open interest cap] pair
+                    description: Coin-specific open interest caps
+                required:
+                  - totalOiCap
+                  - oiSzCapPerPerp
+                  - maxTransferNtl
+                  - coinToOiCap
+              example:
+                totalOiCap: "10000000.0"
+                oiSzCapPerPerp: "10000000000.0"
+                maxTransferNtl: "100000000.0"
+                coinToOiCap:
+                  - ["COIN1", "100000.0"]
+                  - ["COIN2", "200000.0"]

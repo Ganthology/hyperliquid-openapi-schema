@@ -1,0 +1,358 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid WebSocket API
+  description: WebSocket API for real-time data subscriptions and streaming updates
+  version: 0.0.1
+servers:
+  - url: wss://api.hyperliquid.xyz/ws
+    description: Mainnet WebSocket
+  - url: wss://api.hyperliquid-testnet.xyz/ws
+    description: Testnet WebSocket
+
+paths:
+  /ws:
+    get:
+      summary: WebSocket Connection
+      description: |
+        Establish WebSocket connection for real-time data streaming.
+
+        ## Message Format
+
+        ### Subscribe
+        ```json
+        { "method": "subscribe", "subscription": { "type": "...", ... } }
+        ```
+
+        ### Unsubscribe  
+        ```json
+        { "method": "unsubscribe", "subscription": { "type": "...", ... } }
+        ```
+
+        ### Ping
+        ```json
+        { "method": "ping" }
+        ```
+
+        ## Subscription Types
+
+        - **allMids**: `{ "type": "allMids", "dex": "<dex>" }`
+        - **notification**: `{ "type": "notification", "user": "<address>" }`
+        - **webData2**: `{ "type": "webData2", "user": "<address>" }`
+        - **candle**: `{ "type": "candle", "coin": "<coin>", "interval": "<interval>" }`
+        - **l2Book**: `{ "type": "l2Book", "coin": "<coin>" }`
+        - **trades**: `{ "type": "trades", "coin": "<coin>" }`
+        - **orderUpdates**: `{ "type": "orderUpdates", "user": "<address>" }`
+        - **userEvents**: `{ "type": "userEvents", "user": "<address>" }`
+        - **userFills**: `{ "type": "userFills", "user": "<address>" }`
+        - **userFundings**: `{ "type": "userFundings", "user": "<address>" }`
+        - **userNonFundingLedgerUpdates**: `{ "type": "userNonFundingLedgerUpdates", "user": "<address>" }`
+        - **activeAssetCtx**: `{ "type": "activeAssetCtx", "coin": "<coin>" }`
+        - **activeAssetData**: `{ "type": "activeAssetData", "user": "<address>", "coin": "<coin>" }`
+        - **userTwapSliceFills**: `{ "type": "userTwapSliceFills", "user": "<address>" }`
+        - **userTwapHistory**: `{ "type": "userTwapHistory", "user": "<address>" }`
+        - **bbo**: `{ "type": "bbo", "coin": "<coin>" }`
+
+        ## Response Formats
+
+        The server responds with:
+        ```json
+        { "channel": "subscriptionResponse", "data": { ... } }
+        ```
+
+        Then streams updates:
+        ```json
+        { "channel": "<subscription_type>", "data": { ... } }
+        ```
+
+        ## Data Types
+
+        - **AllMids**: `{ mids: Record<string, string> }`
+        - **Notification**: `{ notification: string }`
+        - **Candle[]**: Array of OHLCV candle objects
+        - **WsBook**: Order book with levels array
+        - **WsTrade[]**: Array of trade objects
+        - **WsOrder[]**: Array of order update objects
+        - **WsUserEvent**: User events (fills, funding, liquidation, cancels)
+        - **WsUserFills**: User fills with isSnapshot flag
+        - **WsUserFundings**: Funding payments
+        - **WsBbo**: Best bid/offer updates
+
+        Streaming endpoints include `isSnapshot: true` for initial data.
+
+      responses:
+        "101":
+          description: WebSocket connection established
+        "400":
+          description: Bad request - invalid subscription format
+
+components:
+  schemas:
+    SubscribeMessage:
+      type: object
+      properties:
+        method:
+          type: string
+          enum: [subscribe]
+        subscription:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                [
+                  allMids,
+                  notification,
+                  webData2,
+                  candle,
+                  l2Book,
+                  trades,
+                  orderUpdates,
+                  userEvents,
+                  userFills,
+                  userFundings,
+                  userNonFundingLedgerUpdates,
+                  activeAssetCtx,
+                  activeAssetData,
+                  userTwapSliceFills,
+                  userTwapHistory,
+                  bbo,
+                ]
+            user:
+              type: string
+              description: User address (required for user-specific subscriptions)
+            coin:
+              type: string
+              description: Coin symbol (required for coin-specific subscriptions)
+            dex:
+              type: string
+              description: Dex name (optional for allMids)
+            interval:
+              type: string
+              enum:
+                [
+                  "1m",
+                  "3m",
+                  "5m",
+                  "15m",
+                  "30m",
+                  "1h",
+                  "2h",
+                  "4h",
+                  "8h",
+                  "12h",
+                  "1d",
+                  "3d",
+                  "1w",
+                  "1M",
+                ]
+              description: Candle interval (required for candle subscription)
+            nSigFigs:
+              type: integer
+              description: Significant figures for l2Book aggregation
+            mantissa:
+              type: integer
+              description: Mantissa for l2Book aggregation
+            aggregateByTime:
+              type: boolean
+              description: Aggregate fills by time (for userFills)
+          required:
+            - type
+
+    WsTrade:
+      type: object
+      properties:
+        coin:
+          type: string
+        side:
+          type: string
+        px:
+          type: string
+        sz:
+          type: string
+        hash:
+          type: string
+        time:
+          type: integer
+        tid:
+          type: integer
+        users:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+      required:
+        - coin
+        - side
+        - px
+        - sz
+        - hash
+        - time
+        - tid
+        - users
+
+    WsBook:
+      type: object
+      properties:
+        coin:
+          type: string
+        levels:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: array
+            items:
+              type: object
+              properties:
+                px:
+                  type: string
+                sz:
+                  type: string
+                n:
+                  type: integer
+              required:
+                - px
+                - sz
+                - n
+        time:
+          type: integer
+      required:
+        - coin
+        - levels
+        - time
+
+    WsFill:
+      type: object
+      properties:
+        coin:
+          type: string
+        px:
+          type: string
+        sz:
+          type: string
+        side:
+          type: string
+        time:
+          type: integer
+        startPosition:
+          type: string
+        dir:
+          type: string
+        closedPnl:
+          type: string
+        hash:
+          type: string
+        oid:
+          type: integer
+        crossed:
+          type: boolean
+        fee:
+          type: string
+        tid:
+          type: integer
+        feeToken:
+          type: string
+        builderFee:
+          type: string
+          description: Optional builder fee
+      required:
+        - coin
+        - px
+        - sz
+        - side
+        - time
+        - startPosition
+        - dir
+        - closedPnl
+        - hash
+        - oid
+        - crossed
+        - fee
+        - tid
+        - feeToken
+
+    WsOrder:
+      type: object
+      properties:
+        order:
+          type: object
+          properties:
+            coin:
+              type: string
+            side:
+              type: string
+            limitPx:
+              type: string
+            sz:
+              type: string
+            oid:
+              type: integer
+            timestamp:
+              type: integer
+            origSz:
+              type: string
+            cloid:
+              type: string
+              nullable: true
+          required:
+            - coin
+            - side
+            - limitPx
+            - sz
+            - oid
+            - timestamp
+            - origSz
+        status:
+          type: string
+        statusTimestamp:
+          type: integer
+      required:
+        - order
+        - status
+        - statusTimestamp
+
+    Candle:
+      type: object
+      properties:
+        t:
+          type: integer
+          description: Open timestamp
+        T:
+          type: integer
+          description: Close timestamp
+        s:
+          type: string
+          description: Coin symbol
+        i:
+          type: string
+          description: Interval
+        o:
+          type: number
+          description: Open price
+        c:
+          type: number
+          description: Close price
+        h:
+          type: number
+          description: High price
+        l:
+          type: number
+          description: Low price
+        v:
+          type: number
+          description: Volume
+        n:
+          type: number
+          description: Number of trades
+      required:
+        - t
+        - T
+        - s
+        - i
+        - o
+        - c
+        - h
+        - l
+        - v
+        - n

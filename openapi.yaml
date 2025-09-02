@@ -1,0 +1,884 @@
+openapi: 3.1.0
+info:
+  title: Hyperliquid Unified API
+  description: |
+    Consolidated OpenAPI 3.1 schema for Hyperliquid REST and WebSocket APIs.
+
+    - POST /info: Multiplexed info endpoint using `type` discriminator
+    - POST /exchange: Trading operations
+    - GET  /ws: WebSocket entrypoint for real-time subscriptions
+  version: 0.1.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+security: []
+paths:
+  /info:
+    post:
+      operationId: postInfo
+      summary: Multiplexed info endpoint
+      description: |
+        A single endpoint that serves many read-only queries distinguished by a `type` field
+        in the JSON body. This operation uses a discriminator on the `type` property to pick
+        the appropriate request schema. Responses vary by request `type`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/AllMidsRequest'
+                - $ref: '#/components/schemas/OpenOrdersRequest'
+                - $ref: '#/components/schemas/FrontendOpenOrdersRequest'
+                - $ref: '#/components/schemas/UserFillsRequest'
+                - $ref: '#/components/schemas/UserFillsByTimeRequest'
+                - $ref: '#/components/schemas/UserRateLimitRequest'
+                - $ref: '#/components/schemas/OrderStatusRequest'
+                - $ref: '#/components/schemas/L2BookRequest'
+                - $ref: '#/components/schemas/CandleSnapshotRequest'
+                - $ref: '#/components/schemas/PortfolioRequest'
+                - $ref: '#/components/schemas/SpotMetaRequest'
+                - $ref: '#/components/schemas/SpotMetaAndAssetCtxsRequest'
+                - $ref: '#/components/schemas/SpotClearinghouseStateRequest'
+                - $ref: '#/components/schemas/PerpMetaRequest'
+                - $ref: '#/components/schemas/PerpMetaAndAssetCtxsRequest'
+                - $ref: '#/components/schemas/PerpClearinghouseStateRequest'
+              discriminator:
+                propertyName: type
+                mapping:
+                  allMids: '#/components/schemas/AllMidsRequest'
+                  openOrders: '#/components/schemas/OpenOrdersRequest'
+                  frontendOpenOrders: '#/components/schemas/FrontendOpenOrdersRequest'
+                  userFills: '#/components/schemas/UserFillsRequest'
+                  userFillsByTime: '#/components/schemas/UserFillsByTimeRequest'
+                  userRateLimit: '#/components/schemas/UserRateLimitRequest'
+                  orderStatus: '#/components/schemas/OrderStatusRequest'
+                  l2Book: '#/components/schemas/L2BookRequest'
+                  candleSnapshot: '#/components/schemas/CandleSnapshotRequest'
+                  portfolio: '#/components/schemas/PortfolioRequest'
+                  spotMeta: '#/components/schemas/SpotMetaRequest'
+                  spotMetaAndAssetCtxs: '#/components/schemas/SpotMetaAndAssetCtxsRequest'
+                  spotClearinghouseState: '#/components/schemas/SpotClearinghouseStateRequest'
+                  meta: '#/components/schemas/PerpMetaRequest'
+                  metaAndAssetCtxs: '#/components/schemas/PerpMetaAndAssetCtxsRequest'
+                  clearinghouseState: '#/components/schemas/PerpClearinghouseStateRequest'
+      responses:
+        '200':
+          description: Successful response (varies by request `type`)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AllMidsResponse'
+                  - $ref: '#/components/schemas/OpenOrdersResponse'
+                  - $ref: '#/components/schemas/FrontendOpenOrdersResponse'
+                  - $ref: '#/components/schemas/UserFillsResponse'
+                  - $ref: '#/components/schemas/UserFillsByTimeResponse'
+                  - $ref: '#/components/schemas/UserRateLimitResponse'
+                  - $ref: '#/components/schemas/OrderStatusResponse'
+                  - $ref: '#/components/schemas/L2BookResponse'
+                  - $ref: '#/components/schemas/CandleSnapshotResponse'
+                  - $ref: '#/components/schemas/PortfolioResponse'
+                  - $ref: '#/components/schemas/SpotMetaResponse'
+                  - $ref: '#/components/schemas/SpotMetaAndAssetCtxsResponse'
+                  - $ref: '#/components/schemas/SpotClearinghouseStateResponse'
+                  - $ref: '#/components/schemas/PerpMetaResponse'
+                  - $ref: '#/components/schemas/PerpMetaAndAssetCtxsResponse'
+                  - $ref: '#/components/schemas/PerpClearinghouseStateResponse'
+        '400':
+          description: Bad request
+        '429':
+          description: Rate limited
+  /exchange:
+    post:
+      operationId: postExchange
+      summary: Execute trading operations
+      description: |
+        All trading operations use POST /exchange with different action types.
+
+        Common request structure:
+        - `action`: Operation-specific object
+        - `nonce`: Timestamp in milliseconds
+        - `signature`: Cryptographic signature
+        - `vaultAddress`: Optional, for vault trading
+        - `expiresAfter`: Optional expiration timestamp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: object
+                  description: Action-specific parameters
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        [
+                          order,
+                          cancel,
+                          cancelByCloid,
+                          scheduleCancel,
+                          modify,
+                          batchModify,
+                          updateLeverage,
+                          updateIsolatedMargin,
+                          usdSend,
+                          spotSend,
+                          withdraw3,
+                          usdClassTransfer,
+                          sendAsset,
+                          cDeposit,
+                          cWithdraw,
+                          tokenDelegate,
+                          vaultTransfer,
+                          approveAgent,
+                          approveBuilderFee,
+                          twapOrder,
+                          twapCancel,
+                          reserveRequestWeight,
+                          noop,
+                        ]
+                  required:
+                    - type
+                nonce:
+                  type: integer
+                  description: Current timestamp in milliseconds
+                signature:
+                  type: object
+                  description: Cryptographic signature
+                vaultAddress:
+                  type: string
+                  description: Vault address for vault trading
+                expiresAfter:
+                  type: integer
+                  description: Request expiration timestamp
+              required:
+                - action
+                - nonce
+                - signature
+      responses:
+        '200':
+          description: Success or error response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [ok]
+                      response:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                          data:
+                            type: object
+                        required:
+                          - type
+                    required:
+                      - status
+                      - response
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        enum: [err]
+                      response:
+                        type: string
+                    required:
+                      - status
+                      - response
+        '400':
+          description: Bad request
+        '429':
+          description: Rate limited
+  /ws:
+    get:
+      operationId: getWebsocket
+      summary: WebSocket Connection
+      description: |
+        Establish WebSocket connection for real-time data streaming.
+
+        Subscribe by sending JSON messages like:
+        { "method": "subscribe", "subscription": { "type": "...", ... } }
+
+        Then the server responds with `subscriptionResponse` and streams updates on the
+        corresponding channel.
+      servers:
+        - url: wss://api.hyperliquid.xyz/ws
+          description: Mainnet WebSocket
+        - url: wss://api.hyperliquid-testnet.xyz/ws
+          description: Testnet WebSocket
+      responses:
+        '200':
+          description: OK
+        '101':
+          description: WebSocket connection established
+        '400':
+          description: Bad request - invalid subscription format
+components:
+  schemas:
+    # ---------- Shared primitives ----------
+    FloatString:
+      type: string
+      description: Numeric string representing a decimal-encoded number
+
+    # ---------- /info: Requests ----------
+    AllMidsRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [allMids]
+
+    OpenOrdersRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [openOrders]
+        user:
+          type: string
+          description: User's Ethereum address
+
+    FrontendOpenOrdersRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [frontendOpenOrders]
+        user:
+          type: string
+          description: User's Ethereum address
+
+    UserFillsRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [userFills]
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+        aggregateByTime:
+          type: boolean
+          description: Combine partial fills from single crossing order
+
+    UserFillsByTimeRequest:
+      type: object
+      required: [type, user, startTime]
+      properties:
+        type:
+          type: string
+          enum: [userFillsByTime]
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+        startTime:
+          type: integer
+          description: Start time in milliseconds (inclusive)
+        endTime:
+          type: integer
+          description: End time in milliseconds (inclusive). Defaults to current time
+        aggregateByTime:
+          type: boolean
+          description: Combine partial fills from single crossing order
+
+    UserRateLimitRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [userRateLimit]
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+
+    OrderStatusRequest:
+      type: object
+      required: [user, type, oid]
+      properties:
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+        type:
+          type: string
+          enum: [orderStatus]
+        oid:
+          oneOf:
+            - type: integer
+            - type: string
+          description: Either u64 order id or 16-byte hex string client order id
+
+    L2BookRequest:
+      type: object
+      required: [type, coin]
+      properties:
+        type:
+          type: string
+          enum: [l2Book]
+        coin:
+          type: string
+        nSigFigs:
+          type: integer
+          description: Aggregate levels to n significant figures (2,3,4,5)
+        mantissa:
+          type: integer
+          description: Only if nSigFigs is 5; accepts 1, 2 or 5
+
+    CandleSnapshotRequest:
+      type: object
+      required: [type, req]
+      properties:
+        type:
+          type: string
+          enum: [candleSnapshot]
+        req:
+          type: object
+          required: [coin, interval]
+          properties:
+            coin:
+              type: string
+            interval:
+              type: string
+              enum: ["1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "8h", "12h", "1d", "3d", "1w", "1M"]
+            startTime:
+              type: integer
+            endTime:
+              type: integer
+
+    PortfolioRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [portfolio]
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+
+    SpotMetaRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [spotMeta]
+
+    SpotMetaAndAssetCtxsRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [spotMetaAndAssetCtxs]
+
+    SpotClearinghouseStateRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [spotClearinghouseState]
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+
+    PerpMetaRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [meta]
+        dex:
+          type: string
+          description: Perp dex name. Empty string represents the first perp dex
+
+    PerpMetaAndAssetCtxsRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [metaAndAssetCtxs]
+
+    PerpClearinghouseStateRequest:
+      type: object
+      required: [type, user]
+      properties:
+        type:
+          type: string
+          enum: [clearinghouseState]
+        user:
+          type: string
+          description: Address in 42-character hexadecimal format
+        dex:
+          type: string
+          description: Perp dex name. Empty string represents the first perp dex
+
+    # ---------- /info: Responses ----------
+    AllMidsResponse:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/FloatString'
+
+    OpenOrdersResponse:
+      type: array
+      items:
+        type: object
+        required: [coin, limitPx, oid, side, sz, timestamp]
+        properties:
+          coin:
+            type: string
+          limitPx:
+            type: string
+          oid:
+            type: integer
+          side:
+            type: string
+            enum: [B, A]
+          sz:
+            type: string
+          timestamp:
+            type: integer
+
+    FrontendOpenOrdersResponse:
+      type: array
+      items:
+        type: object
+        required:
+          [
+            coin,
+            isPositionTpsl,
+            isTrigger,
+            limitPx,
+            oid,
+            orderType,
+            origSz,
+            reduceOnly,
+            side,
+            sz,
+            timestamp,
+          ]
+        properties:
+          coin:
+            type: string
+          isPositionTpsl:
+            type: boolean
+          isTrigger:
+            type: boolean
+          limitPx:
+            type: string
+          oid:
+            type: integer
+          orderType:
+            type: string
+          origSz:
+            type: string
+          reduceOnly:
+            type: boolean
+          side:
+            type: string
+            enum: [B, A]
+          sz:
+            type: string
+          timestamp:
+            type: integer
+          triggerCondition:
+            type: string
+          triggerPx:
+            type: string
+
+    UserFill:
+      type: object
+      required:
+        [
+          closedPnl,
+          coin,
+          crossed,
+          dir,
+          oid,
+          px,
+          side,
+          startPosition,
+          sz,
+          time,
+          fee,
+          feeToken,
+          tid,
+          hash,
+        ]
+      properties:
+        closedPnl: { type: string }
+        coin: { type: string }
+        crossed: { type: boolean }
+        dir: { type: string }
+        oid: { type: integer }
+        px: { type: string }
+        side: { type: string, enum: [B, A] }
+        startPosition: { type: string }
+        sz: { type: string }
+        time: { type: integer }
+        fee: { type: string }
+        feeToken: { type: string }
+        builderFee:
+          type: string
+          description: Optional builder fee, only present if non-zero
+        tid: { type: integer }
+        hash: { type: string }
+
+    UserFillsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserFill'
+
+    UserFillsByTimeResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserFill'
+
+    UserRateLimitResponse:
+      type: object
+      properties:
+        cumVlm: { type: string }
+        nRequestsUsed: { type: integer }
+        nRequestsCap: { type: integer }
+
+    OrderStatusResponse:
+      oneOf:
+        - type: object
+          description: Order found
+          properties:
+            status:
+              type: string
+              enum: [order]
+            order:
+              type: object
+              properties:
+                order:
+                  type: object
+                  properties:
+                    coin: { type: string }
+                    side: { type: string, enum: [B, A] }
+                    limitPx: { type: string }
+                    sz: { type: string }
+                    oid: { type: integer }
+                    timestamp: { type: integer }
+                    triggerCondition: { type: string }
+                    isTrigger: { type: boolean }
+                    triggerPx: { type: string }
+                    children: { type: array }
+                    isPositionTpsl: { type: boolean }
+                    reduceOnly: { type: boolean }
+                    orderType: { type: string }
+                    origSz: { type: string }
+                    tid: { type: string }
+                    cloid:
+                      oneOf:
+                        - type: integer
+                        - type: 'null'
+                status:
+                  enum: [open, filled, cancelled, rejected]
+                statusTimestamp: { type: integer }
+        - type: object
+          description: Missing order
+          properties:
+            status:
+              type: string
+              enum: [unknownOid]
+
+    L2BookResponse:
+      type: object
+      required: [coin, time, levels]
+      properties:
+        coin: { type: string }
+        time: { type: integer }
+        levels:
+          type: array
+          items:
+            type: array
+            items:
+              type: object
+              required: [px, sz, n]
+              properties:
+                px: { type: string }
+                sz: { type: string }
+                n: { type: integer }
+
+    Candle:
+      type: object
+      required: [T, c, h, i, l, n, o, s, t, v]
+      properties:
+        T: { type: integer, description: Close timestamp }
+        c: { type: string, description: Close price }
+        h: { type: string, description: High price }
+        i: { type: string, description: Interval }
+        l: { type: string, description: Low price }
+        n: { type: integer, description: Number of candles }
+        o: { type: string, description: Open price }
+        s: { type: string, description: Symbol }
+        t: { type: integer, description: Start time }
+        v: { type: string, description: Volume }
+
+    CandleSnapshotResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/Candle'
+
+    PortfolioResponse:
+      type: array
+      items:
+        type: array
+        minItems: 2
+        maxItems: 2
+        items:
+          oneOf:
+            - type: string
+              enum: [day, week, month, allTime, perpDay, perpWeek, perpMonth, perpAllTime]
+            - type: object
+              required: [accountValueHistory, pnlHistory, vlm]
+              properties:
+                accountValueHistory:
+                  type: array
+                  items:
+                    type: array
+                    minItems: 2
+                    maxItems: 2
+                    items:
+                      oneOf:
+                        - type: integer
+                        - type: string
+                pnlHistory:
+                  type: array
+                  items:
+                    type: array
+                    minItems: 2
+                    maxItems: 2
+                    items:
+                      oneOf:
+                        - type: integer
+                        - type: string
+                vlm:
+                  type: string
+
+    SpotMetaResponse:
+      type: object
+      required: [tokens, universe]
+      properties:
+        tokens:
+          type: array
+          items:
+            type: object
+            required: [name, szDecimals, weiDecimals, index, tokenId, isCanonical, evmContract, fullName]
+            properties:
+              name: { type: string }
+              szDecimals: { type: integer }
+              weiDecimals: { type: integer }
+              index: { type: integer }
+              tokenId: { type: string }
+              isCanonical: { type: boolean }
+              evmContract:
+                oneOf:
+                  - type: string
+                  - type: 'null'
+              fullName:
+                oneOf:
+                  - type: string
+                  - type: 'null'
+        universe:
+          type: array
+          items:
+            type: object
+            required: [name, tokens, index, isCanonical]
+            properties:
+              name: { type: string }
+              tokens:
+                type: array
+                items: { type: integer }
+                minItems: 2
+                maxItems: 2
+              index: { type: integer }
+              isCanonical: { type: boolean }
+
+    SpotMetaAndAssetCtxsResponse:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/SpotMetaResponse'
+          - type: array
+            items:
+              type: object
+              required: [dayNtlVlm, markPx, midPx, prevDayPx]
+              properties:
+                dayNtlVlm: { type: string }
+                markPx: { type: string }
+                midPx: { type: string }
+                prevDayPx: { type: string }
+
+    SpotClearinghouseStateResponse:
+      type: object
+      required: [balances]
+      properties:
+        balances:
+          type: array
+          items:
+            type: object
+            required: [coin, token, hold, total, entryNtl]
+            properties:
+              coin: { type: string }
+              token: { type: integer }
+              hold: { type: string }
+              total: { type: string }
+              entryNtl: { type: string }
+
+    PerpMetaResponse:
+      type: object
+      required: [universe, marginTables]
+      properties:
+        universe:
+          type: array
+          items:
+            type: object
+            required: [name, szDecimals, maxLeverage]
+            properties:
+              name: { type: string }
+              szDecimals: { type: integer }
+              maxLeverage: { type: integer }
+              onlyIsolated: { type: boolean }
+              isDelisted: { type: boolean }
+        marginTables:
+          type: array
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              oneOf:
+                - type: integer
+                - type: object
+                  required: [description, marginTiers]
+                  properties:
+                    description: { type: string }
+                    marginTiers:
+                      type: array
+                      items:
+                        type: object
+                        required: [lowerBound, maxLeverage]
+                        properties:
+                          lowerBound: { type: string }
+                          maxLeverage: { type: integer }
+
+    PerpMetaAndAssetCtxsResponse:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        oneOf:
+          - type: object
+            required: [universe]
+            properties:
+              universe:
+                type: array
+                items:
+                  type: object
+                  required: [name, szDecimals, maxLeverage]
+                  properties:
+                    name: { type: string }
+                    szDecimals: { type: integer }
+                    maxLeverage: { type: integer }
+                    onlyIsolated: { type: boolean }
+          - type: array
+            items:
+              type: object
+              required: [dayNtlVlm, funding, impactPxs, markPx, midPx, openInterest, oraclePx, premium, prevDayPx]
+              properties:
+                dayNtlVlm: { type: string }
+                funding: { type: string }
+                impactPxs:
+                  type: array
+                  items: { type: string }
+                  minItems: 2
+                  maxItems: 2
+                markPx: { type: string }
+                midPx: { type: string }
+                openInterest: { type: string }
+                oraclePx: { type: string }
+                premium: { type: string }
+                prevDayPx: { type: string }
+
+    PerpClearinghouseStateResponse:
+      type: object
+      required: [assetPositions, crossMaintenanceMarginUsed, crossMarginSummary, marginSummary, time, withdrawable]
+      properties:
+        assetPositions:
+          type: array
+          items:
+            type: object
+            required: [position, type]
+            properties:
+              position:
+                type: object
+                required: [coin, cumFunding, entryPx, leverage, liquidationPx, marginUsed, maxLeverage, positionValue, returnOnEquity, szi, unrealizedPnl]
+                properties:
+                  coin: { type: string }
+                  cumFunding:
+                    type: object
+                    required: [allTime, sinceChange, sinceOpen]
+                    properties:
+                      allTime: { type: string }
+                      sinceChange: { type: string }
+                      sinceOpen: { type: string }
+                  entryPx: { type: string }
+                  leverage:
+                    type: object
+                    required: [rawUsd, type, value]
+                    properties:
+                      rawUsd: { type: string }
+                      type: { type: string, enum: [isolated, cross] }
+                      value: { type: number }
+                  liquidationPx: { type: string }
+                  marginUsed: { type: string }
+                  maxLeverage: { type: integer }
+                  positionValue: { type: string }
+                  returnOnEquity: { type: string }
+                  szi: { type: string }
+                  unrealizedPnl: { type: string }
+              type: { type: string, enum: [oneWay] }
+        crossMaintenanceMarginUsed: { type: string }
+        crossMarginSummary:
+          type: object
+          required: [accountValue, totalMarginUsed, totalNtlPos, totalRawUsd]
+          properties:
+            accountValue: { type: string }
+            totalMarginUsed: { type: string }
+            totalNtlPos: { type: string }
+            totalRawUsd: { type: string }
+        marginSummary:
+          type: object
+          required: [accountValue, totalMarginUsed, totalNtlPos, totalRawUsd]
+          properties:
+            accountValue: { type: string }
+            totalMarginUsed: { type: string }
+            totalNtlPos: { type: string }
+            totalRawUsd: { type: string }
+        time: { type: integer }
+        withdrawable: { type: string }

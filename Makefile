@@ -4,10 +4,10 @@
 lint:
 	npx @redocly/cli@latest lint openapi.yaml
 
-# Build a Redoc HTML preview into docs/redoc.html
+# Build a Redoc HTML page at repository root as index.html
 preview:
-	npx @redocly/cli@latest build-docs openapi.yaml -o docs/redoc.html
+	npx @redocly/cli@latest build-docs openapi.yaml -o index.html
 
-# Serve the static Swagger UI under docs/ and load root openapi.yaml
+# Serve both Redoc (root index.html) and Swagger UI (/docs)
 serve-docs:
-	python3 -m http.server 8080 -d docs
+	python3 -m http.server 8080 -d .

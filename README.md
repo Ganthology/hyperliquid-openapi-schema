@@ -27,10 +27,10 @@ Commands:
   ```bash
   make lint
   ```
-- Build a Redoc preview HTML (writes to `docs/redoc.html`):
+- Build a Redoc HTML at repo root (`index.html`):
   ```bash
   make preview
-  open docs/redoc.html   # macOS convenience to open in browser
+  open index.html        # macOS convenience to open in browser
   ```
 - Serve Swagger UI (serves `docs/` as root, open `http://localhost:8080/`):
   ```bash

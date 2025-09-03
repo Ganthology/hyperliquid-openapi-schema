@@ -26,6 +26,10 @@ paths:
         A single endpoint that serves many read-only queries distinguished by a `type` field
         in the JSON body. This operation uses a discriminator on the `type` property to pick
         the appropriate request schema. Responses vary by request `type`.
+
+        For example, set `type: gossipRootIps` to retrieve a list of recently available
+        gossip peer IP addresses. This is useful for non-validators who want reliable
+        seed peers to bootstrap their nodes.
       requestBody:
         required: true
         content:
@@ -48,6 +52,7 @@ paths:
                 - $ref: '#/components/schemas/PerpMetaRequest'
                 - $ref: '#/components/schemas/PerpMetaAndAssetCtxsRequest'
                 - $ref: '#/components/schemas/PerpClearinghouseStateRequest'
+                - $ref: '#/components/schemas/GossipRootIpsRequest'
               discriminator:
                 propertyName: type
                 mapping:
@@ -67,6 +72,7 @@ paths:
                   meta: '#/components/schemas/PerpMetaRequest'
                   metaAndAssetCtxs: '#/components/schemas/PerpMetaAndAssetCtxsRequest'
                   clearinghouseState: '#/components/schemas/PerpClearinghouseStateRequest'
+                  gossipRootIps: '#/components/schemas/GossipRootIpsRequest'
       responses:
         '200':
           description: Successful response (varies by request `type`)
@@ -90,6 +96,7 @@ paths:
                   - $ref: '#/components/schemas/PerpMetaResponse'
                   - $ref: '#/components/schemas/PerpMetaAndAssetCtxsResponse'
                   - $ref: '#/components/schemas/PerpClearinghouseStateResponse'
+                  - $ref: '#/components/schemas/GossipRootIpsResponse'
         '400':
           description: Bad request
         '429':
@@ -234,6 +241,17 @@ components:
       description: Numeric string representing a decimal-encoded number
 
     # ---------- /info: Requests ----------
+    GossipRootIpsRequest:
+      type: object
+      description: |
+        For non-validators looking for reliable seed peers. Request recently available
+        peers to bootstrap the gossip network via the unified /info endpoint.
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [gossipRootIps]
+
     AllMidsRequest:
       type: object
       required: [type]
@@ -434,6 +452,15 @@ components:
           description: Perp dex name. Empty string represents the first perp dex
 
     # ---------- /info: Responses ----------
+    GossipRootIpsResponse:
+      type: array
+      description: |
+        List of recently available peer IP addresses suitable as seed nodes for the
+        gossip network. Useful for non-validators to quickly discover reliable peers.
+      items:
+        type: string
+        description: IP address (IPv4 or IPv6)
+
     AllMidsResponse:
       type: object
       additionalProperties:

@@ -12,6 +12,8 @@ Primary spec: `openapi.yaml`
 
 Preview UI: `docs/index.html` (Swagger UI)
 
+Interactive API (Scalar): https://registry.scalar.com/@default-team-7ogjj/apis/hyperliquid-unified-api/latest?format=preview
+
 Hosted docs: [hyperliquid-openapi-schema.pages.dev](https://hyperliquid-openapi-schema.pages.dev/)
 
 Lint/Preview commands are provided via `Makefile`.

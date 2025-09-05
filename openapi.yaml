@@ -5,7 +5,7 @@ info:
     Consolidated OpenAPI 3.1 schema for Hyperliquid REST and WebSocket APIs.
 
     - POST /info: Multiplexed info endpoint using `type` discriminator
-    - POST /exchange: Trading operations
+    - POST /exchange: Trading operations using `action.type` discriminator
     - GET  /ws: WebSocket entrypoint for real-time subscriptions
   version: 0.1.0
   license:
@@ -27,86 +27,64 @@ paths:
         in the JSON body. This operation uses a discriminator on the `type` property to pick
         the appropriate request schema. Responses vary by request `type`.
 
-        For example, set `type: gossipRootIps` to retrieve a list of recently available
-        gossip peer IP addresses. This is useful for non-validators who want reliable
-        seed peers to bootstrap their nodes.
+        Valid `type` values and purposes:
+        - `allMids`: Return mid prices for all actively traded coins. If a book is empty, last trade price is used.
+        - `openOrders`: Retrieve a user's open orders.
+        - `frontendOpenOrders`: Retrieve a user's open orders with additional frontend fields.
+        - `userFills`: Retrieve a user's most recent trade fills (up to 2,000).
+        - `userFillsByTime`: Retrieve a user's trade fills within a time range (up to 2,000 per response).
+        - `userRateLimit`: Return the user's current rate-limit usage and capacity.
+        - `orderStatus`: Query order status by numeric order ID or client order ID (cloid).
+        - `l2Book`: Retrieve an L2 order book snapshot for a given coin (up to 20 levels per side).
+        - `candleSnapshot`: Retrieve OHLCV candles for a coin and interval (most recent 5,000).
+        - `portfolio`: Retrieve summarized portfolio time-series across intervals.
+        - `spotMeta`: Retrieve spot token metadata and spot universe definitions.
+        - `spotMetaAndAssetCtxs`: Retrieve spot metadata and per-asset pricing contexts.
+        - `spotClearinghouseState`: Retrieve a user's spot balances and totals.
+        - `meta`: Retrieve perpetuals metadata including universe and margin tables.
+        - `metaAndAssetCtxs`: Retrieve perps universe and per-asset contexts (funding, OI, prices).
+        - `clearinghouseState`: Retrieve a user's perps clearinghouse account state and summaries.
+        - `gossipRootIps`: Retrieve recently available seed peer IP addresses to bootstrap gossip.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/AllMidsRequest'
-                - $ref: '#/components/schemas/OpenOrdersRequest'
-                - $ref: '#/components/schemas/FrontendOpenOrdersRequest'
-                - $ref: '#/components/schemas/UserFillsRequest'
-                - $ref: '#/components/schemas/UserFillsByTimeRequest'
-                - $ref: '#/components/schemas/UserRateLimitRequest'
-                - $ref: '#/components/schemas/OrderStatusRequest'
-                - $ref: '#/components/schemas/L2BookRequest'
-                - $ref: '#/components/schemas/CandleSnapshotRequest'
-                - $ref: '#/components/schemas/PortfolioRequest'
-                - $ref: '#/components/schemas/SpotMetaRequest'
-                - $ref: '#/components/schemas/SpotMetaAndAssetCtxsRequest'
-                - $ref: '#/components/schemas/SpotClearinghouseStateRequest'
-                - $ref: '#/components/schemas/PerpMetaRequest'
-                - $ref: '#/components/schemas/PerpMetaAndAssetCtxsRequest'
-                - $ref: '#/components/schemas/PerpClearinghouseStateRequest'
-                - $ref: '#/components/schemas/GossipRootIpsRequest'
-              discriminator:
-                propertyName: type
-                mapping:
-                  allMids: '#/components/schemas/AllMidsRequest'
-                  openOrders: '#/components/schemas/OpenOrdersRequest'
-                  frontendOpenOrders: '#/components/schemas/FrontendOpenOrdersRequest'
-                  userFills: '#/components/schemas/UserFillsRequest'
-                  userFillsByTime: '#/components/schemas/UserFillsByTimeRequest'
-                  userRateLimit: '#/components/schemas/UserRateLimitRequest'
-                  orderStatus: '#/components/schemas/OrderStatusRequest'
-                  l2Book: '#/components/schemas/L2BookRequest'
-                  candleSnapshot: '#/components/schemas/CandleSnapshotRequest'
-                  portfolio: '#/components/schemas/PortfolioRequest'
-                  spotMeta: '#/components/schemas/SpotMetaRequest'
-                  spotMetaAndAssetCtxs: '#/components/schemas/SpotMetaAndAssetCtxsRequest'
-                  spotClearinghouseState: '#/components/schemas/SpotClearinghouseStateRequest'
-                  meta: '#/components/schemas/PerpMetaRequest'
-                  metaAndAssetCtxs: '#/components/schemas/PerpMetaAndAssetCtxsRequest'
-                  clearinghouseState: '#/components/schemas/PerpClearinghouseStateRequest'
-                  gossipRootIps: '#/components/schemas/GossipRootIpsRequest'
+              $ref: "#/components/schemas/InfoRequest"
       responses:
-        '200':
+        "200":
           description: Successful response (varies by request `type`)
           content:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/AllMidsResponse'
-                  - $ref: '#/components/schemas/OpenOrdersResponse'
-                  - $ref: '#/components/schemas/FrontendOpenOrdersResponse'
-                  - $ref: '#/components/schemas/UserFillsResponse'
-                  - $ref: '#/components/schemas/UserFillsByTimeResponse'
-                  - $ref: '#/components/schemas/UserRateLimitResponse'
-                  - $ref: '#/components/schemas/OrderStatusResponse'
-                  - $ref: '#/components/schemas/L2BookResponse'
-                  - $ref: '#/components/schemas/CandleSnapshotResponse'
-                  - $ref: '#/components/schemas/PortfolioResponse'
-                  - $ref: '#/components/schemas/SpotMetaResponse'
-                  - $ref: '#/components/schemas/SpotMetaAndAssetCtxsResponse'
-                  - $ref: '#/components/schemas/SpotClearinghouseStateResponse'
-                  - $ref: '#/components/schemas/PerpMetaResponse'
-                  - $ref: '#/components/schemas/PerpMetaAndAssetCtxsResponse'
-                  - $ref: '#/components/schemas/PerpClearinghouseStateResponse'
-                  - $ref: '#/components/schemas/GossipRootIpsResponse'
-        '400':
+                  - $ref: "#/components/schemas/AllMidsResponse"
+                  - $ref: "#/components/schemas/OpenOrdersResponse"
+                  - $ref: "#/components/schemas/FrontendOpenOrdersResponse"
+                  - $ref: "#/components/schemas/UserFillsResponse"
+                  - $ref: "#/components/schemas/UserFillsByTimeResponse"
+                  - $ref: "#/components/schemas/UserRateLimitResponse"
+                  - $ref: "#/components/schemas/OrderStatusResponse"
+                  - $ref: "#/components/schemas/L2BookResponse"
+                  - $ref: "#/components/schemas/CandleSnapshotResponse"
+                  - $ref: "#/components/schemas/PortfolioResponse"
+                  - $ref: "#/components/schemas/SpotMetaResponse"
+                  - $ref: "#/components/schemas/SpotMetaAndAssetCtxsResponse"
+                  - $ref: "#/components/schemas/SpotClearinghouseStateResponse"
+                  - $ref: "#/components/schemas/PerpMetaResponse"
+                  - $ref: "#/components/schemas/PerpMetaAndAssetCtxsResponse"
+                  - $ref: "#/components/schemas/PerpClearinghouseStateResponse"
+                  - $ref: "#/components/schemas/GossipRootIpsResponse"
+        "400":
           description: Bad request
-        '429':
+        "429":
           description: Rate limited
   /exchange:
     post:
       operationId: postExchange
-      summary: Execute trading operations
+      summary: Trading operations based on action
       description: |
-        All trading operations use POST /exchange with different action types.
+        All trading operations use POST /exchange with different `action.type` variants.
 
         Common request structure:
         - `action`: Operation-specific object
@@ -119,60 +97,9 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                action:
-                  type: object
-                  description: Action-specific parameters
-                  properties:
-                    type:
-                      type: string
-                      enum:
-                        [
-                          order,
-                          cancel,
-                          cancelByCloid,
-                          scheduleCancel,
-                          modify,
-                          batchModify,
-                          updateLeverage,
-                          updateIsolatedMargin,
-                          usdSend,
-                          spotSend,
-                          withdraw3,
-                          usdClassTransfer,
-                          sendAsset,
-                          cDeposit,
-                          cWithdraw,
-                          tokenDelegate,
-                          vaultTransfer,
-                          approveAgent,
-                          approveBuilderFee,
-                          twapOrder,
-                          twapCancel,
-                          reserveRequestWeight,
-                          noop,
-                        ]
-                  required:
-                    - type
-                nonce:
-                  type: integer
-                  description: Current timestamp in milliseconds
-                signature:
-                  type: object
-                  description: Cryptographic signature
-                vaultAddress:
-                  type: string
-                  description: Vault address for vault trading
-                expiresAfter:
-                  type: integer
-                  description: Request expiration timestamp
-              required:
-                - action
-                - nonce
-                - signature
+              $ref: "#/components/schemas/ExchangeRequest"
       responses:
-        '200':
+        "200":
           description: Success or error response
           content:
             application/json:
@@ -205,9 +132,9 @@ paths:
                     required:
                       - status
                       - response
-        '400':
+        "400":
           description: Bad request
-        '429':
+        "429":
           description: Rate limited
   /ws:
     get:
@@ -227,14 +154,836 @@ paths:
         - url: wss://api.hyperliquid-testnet.xyz/ws
           description: Testnet WebSocket
       responses:
-        '200':
+        "200":
           description: OK
-        '101':
+        "101":
           description: WebSocket connection established
-        '400':
+        "400":
           description: Bad request - invalid subscription format
 components:
   schemas:
+    # ---------- /info: Discriminated request union with titled variants ----------
+    InfoRequest:
+      title: Info Request
+      type: object
+      description: |
+        Multiplexed info request. Select a variant using the `type` discriminator.
+        Common variants include pricing, books, orders, portfolio, metadata, and state.
+      properties:
+        type:
+          type: string
+          description: Select which info query to execute
+          enum:
+            [
+              allMids,
+              openOrders,
+              frontendOpenOrders,
+              userFills,
+              userFillsByTime,
+              userRateLimit,
+              orderStatus,
+              l2Book,
+              candleSnapshot,
+              portfolio,
+              spotMeta,
+              spotMetaAndAssetCtxs,
+              spotClearinghouseState,
+              meta,
+              metaAndAssetCtxs,
+              clearinghouseState,
+              gossipRootIps,
+            ]
+          x-enumNames:
+            [
+              AllMids,
+              OpenOrders,
+              FrontendOpenOrders,
+              UserFills,
+              UserFillsByTime,
+              UserRateLimit,
+              OrderStatus,
+              L2Book,
+              CandleSnapshot,
+              Portfolio,
+              SpotMeta,
+              SpotMetaAndAssetCtxs,
+              SpotClearinghouseState,
+              PerpMeta,
+              PerpMetaAndAssetCtxs,
+              PerpClearinghouseState,
+              GossipRootIps,
+            ]
+          x-enumDescriptions:
+            [
+              "Return mid prices for all actively traded coins",
+              "Retrieve a user's open orders",
+              "Retrieve user open orders with frontend fields",
+              "Retrieve a user's recent trade fills",
+              "Retrieve a user's trade fills within a time range",
+              "Return the user's current rate limit usage",
+              "Query order status by numeric order ID or cloid",
+              "Retrieve L2 order book snapshot for a coin",
+              "Retrieve OHLCV candles for a coin and interval",
+              "Retrieve summarized portfolio time-series for a user",
+              "Retrieve spot token metadata and spot universe",
+              "Retrieve spot metadata and spot asset contexts",
+              "Retrieve a user's spot balances and totals",
+              "Retrieve perpetuals metadata (universe, margin tables)",
+              "Retrieve perps universe and asset contexts",
+              "Retrieve a user's perps clearinghouse state",
+              "Retrieve recent seed peer IPs for gossip",
+            ]
+          oneOf:
+            - const: allMids
+              title: All Mids
+              description: Return mid prices for all actively traded coins
+            - const: openOrders
+              title: Open Orders
+              description: Retrieve a user's open orders
+            - const: frontendOpenOrders
+              title: Frontend Open Orders
+              description: Retrieve open orders with frontend fields
+            - const: userFills
+              title: User Fills
+              description: Retrieve a user's most recent trade fills
+            - const: userFillsByTime
+              title: User Fills By Time
+              description: Retrieve a user's fills within a time range
+            - const: userRateLimit
+              title: User Rate Limit
+              description: Current rate-limit usage and capacity
+            - const: orderStatus
+              title: Order Status
+              description: Query order status by numeric order ID or cloid
+            - const: l2Book
+              title: L2 Book
+              description: Retrieve an L2 order book snapshot for a coin
+            - const: candleSnapshot
+              title: Candle Snapshot
+              description: Retrieve OHLCV candles for a coin and interval
+            - const: portfolio
+              title: Portfolio
+              description: Summarized portfolio time-series for a user
+            - const: spotMeta
+              title: Spot Meta
+              description: Spot token metadata and spot universe
+            - const: spotMetaAndAssetCtxs
+              title: Spot Meta And Asset Contexts
+              description: Spot metadata plus per-asset pricing contexts
+            - const: spotClearinghouseState
+              title: Spot Clearinghouse State
+              description: User's spot balances and totals
+            - const: meta
+              title: Perp Meta
+              description: Perpetuals metadata including universe and margin tables
+            - const: metaAndAssetCtxs
+              title: Perp Meta And Asset Contexts
+              description: Perps universe plus per-asset contexts (funding, OI, prices)
+            - const: clearinghouseState
+              title: Perp Clearinghouse State
+              description: User's perps clearinghouse account state and summaries
+            - const: gossipRootIps
+              title: Gossip Root IPs
+              description: Recently available seed peer IPs for gossip
+      required: [type]
+      oneOf:
+        - $ref: "#/components/schemas/AllMidsRequest"
+        - $ref: "#/components/schemas/OpenOrdersRequest"
+        - $ref: "#/components/schemas/FrontendOpenOrdersRequest"
+        - $ref: "#/components/schemas/UserFillsRequest"
+        - $ref: "#/components/schemas/UserFillsByTimeRequest"
+        - $ref: "#/components/schemas/UserRateLimitRequest"
+        - $ref: "#/components/schemas/OrderStatusRequest"
+        - $ref: "#/components/schemas/L2BookRequest"
+        - $ref: "#/components/schemas/CandleSnapshotRequest"
+        - $ref: "#/components/schemas/PortfolioRequest"
+        - $ref: "#/components/schemas/SpotMetaRequest"
+        - $ref: "#/components/schemas/SpotMetaAndAssetCtxsRequest"
+        - $ref: "#/components/schemas/SpotClearinghouseStateRequest"
+        - $ref: "#/components/schemas/PerpMetaRequest"
+        - $ref: "#/components/schemas/PerpMetaAndAssetCtxsRequest"
+        - $ref: "#/components/schemas/PerpClearinghouseStateRequest"
+        - $ref: "#/components/schemas/GossipRootIpsRequest"
+      discriminator:
+        propertyName: type
+        mapping:
+          allMids: "#/components/schemas/AllMidsRequest"
+          openOrders: "#/components/schemas/OpenOrdersRequest"
+          frontendOpenOrders: "#/components/schemas/FrontendOpenOrdersRequest"
+          userFills: "#/components/schemas/UserFillsRequest"
+          userFillsByTime: "#/components/schemas/UserFillsByTimeRequest"
+          userRateLimit: "#/components/schemas/UserRateLimitRequest"
+          orderStatus: "#/components/schemas/OrderStatusRequest"
+          l2Book: "#/components/schemas/L2BookRequest"
+          candleSnapshot: "#/components/schemas/CandleSnapshotRequest"
+          portfolio: "#/components/schemas/PortfolioRequest"
+          spotMeta: "#/components/schemas/SpotMetaRequest"
+          spotMetaAndAssetCtxs: "#/components/schemas/SpotMetaAndAssetCtxsRequest"
+          spotClearinghouseState: "#/components/schemas/SpotClearinghouseStateRequest"
+          meta: "#/components/schemas/PerpMetaRequest"
+          metaAndAssetCtxs: "#/components/schemas/PerpMetaAndAssetCtxsRequest"
+          clearinghouseState: "#/components/schemas/PerpClearinghouseStateRequest"
+          gossipRootIps: "#/components/schemas/GossipRootIpsRequest"
+    # ---------- /exchange: Request & Action union ----------
+    ExchangeRequest:
+      type: object
+      description: Request body for POST /exchange
+      properties:
+        action:
+          allOf:
+            - $ref: "#/components/schemas/ExchangeAction"
+          description: |
+            Choose one of the following actions via the `type` discriminator:
+            - `order`: Place a new order (limit/trigger)
+            - `cancel`: Cancel by order id
+            - `cancelByCloid`: Cancel by client order id
+            - `scheduleCancel`: Schedule a cancel-all operation at a future time.
+            - `modify`: Modify an existing order
+            - `batchModify`: Modify multiple orders
+            - `updateLeverage`: Update cross or isolated leverage on a coin. 
+            - `updateIsolatedMargin`: Add or remove margin from isolated position
+            - `usdSend`: Send usd to another address. This transfer does not touch the EVM bridge. The signature format is human readable for wallet interfaces.
+            - `spotSend`: Send spot assets to another address. This transfer does not touch the EVM bridge. The signature format is human readable for wallet interfaces.
+            - `withdraw3`: This method is used to initiate the withdrawal flow. After making this request, the L1 validators will sign and send the withdrawal request to the bridge contract. There is a $1 fee for withdrawing at the time of this writing and withdrawals take approximately 5 minutes to finalize.
+            - `usdClassTransfer`: This method is used to transfer USDC from the user's spot wallet to perp wallet and vice versa.
+            - `sendAsset`: (testnet only) This generalized method is used to transfer tokens between different perp DEXs, spot balance, users, and/or sub-accounts. Use "" to specify the default USDC perp DEX and "spot" to specify spot. Only the collateral token can be transferred to or from a perp DEX.
+            - `cDeposit`: This method is used to transfer native token from the user's spot account into staking for delegating to validators. 
+            - `cWithdraw`: This method is used to transfer native token from staking into the user's spot account. Note that transfers from staking to spot account go through a 7 day unstaking queue.
+            - `tokenDelegate`: Delegate or undelegate native tokens to or from a validator. Note that delegations to a particular validator have a lockup duration of 1 day.
+            - `vaultTransfer`: Add or remove funds from a vault.
+            - `approveAgent`: Approves an API Wallet (also sometimes referred to as an Agent Wallet).
+            - `approveBuilderFee`: Approve a maximum fee rate for a builder.
+            - `twapOrder`: Place a TWAP order
+            - `twapCancel`: Cancel a TWAP order
+            - `reserveRequestWeight`: Instead of trading to increase the address based rate limits, this action allows reserving additional actions for 0.0005 USDC per request. The cost is paid from the Perps balance. 
+            - `noop`: Invalidate Pending Nonce
+        nonce:
+          type: integer
+          description: Current timestamp in milliseconds
+        signature:
+          type: object
+          description: Cryptographic signature
+        vaultAddress:
+          type: string
+          description: Vault address for vault trading
+        expiresAfter:
+          type: integer
+          description: Request expiration timestamp
+      required:
+        - action
+        - nonce
+        - signature
+
+    ExchangeAction:
+      title: Trading Action
+      description: |
+        Union of trading operations executed via POST /exchange.
+        Common variants include:
+        - Order: place a new order (limit or trigger)
+        - Cancel: cancel by numeric order id
+        - Cancel by Cloid: cancel by client order id
+        - Modify / Batch Modify: amend existing order(s)
+        - Update Leverage / Update Isolated Margin: change risk settings
+        - USD/Spot transfers and withdrawals
+        - Vault and agent approvals
+        - TWAP order management
+        - Reserve request weight and no-op
+      oneOf:
+        - $ref: "#/components/schemas/OrderAction"
+        - $ref: "#/components/schemas/CancelAction"
+        - $ref: "#/components/schemas/CancelByCloidAction"
+        - $ref: "#/components/schemas/ScheduleCancelAction"
+        - $ref: "#/components/schemas/ModifyAction"
+        - $ref: "#/components/schemas/BatchModifyAction"
+        - $ref: "#/components/schemas/UpdateLeverageAction"
+        - $ref: "#/components/schemas/UpdateIsolatedMarginAction"
+        - $ref: "#/components/schemas/UsdSendAction"
+        - $ref: "#/components/schemas/SpotSendAction"
+        - $ref: "#/components/schemas/Withdraw3Action"
+        - $ref: "#/components/schemas/UsdClassTransferAction"
+        - $ref: "#/components/schemas/SendAssetAction"
+        - $ref: "#/components/schemas/CDepositAction"
+        - $ref: "#/components/schemas/CWithdrawAction"
+        - $ref: "#/components/schemas/TokenDelegateAction"
+        - $ref: "#/components/schemas/VaultTransferAction"
+        - $ref: "#/components/schemas/ApproveAgentAction"
+        - $ref: "#/components/schemas/ApproveBuilderFeeAction"
+        - $ref: "#/components/schemas/TwapOrderAction"
+        - $ref: "#/components/schemas/TwapCancelAction"
+        - $ref: "#/components/schemas/ReserveRequestWeightAction"
+        - $ref: "#/components/schemas/NoopAction"
+      discriminator:
+        propertyName: type
+        mapping:
+          order: "#/components/schemas/OrderAction"
+          cancel: "#/components/schemas/CancelAction"
+          cancelByCloid: "#/components/schemas/CancelByCloidAction"
+          scheduleCancel: "#/components/schemas/ScheduleCancelAction"
+          modify: "#/components/schemas/ModifyAction"
+          batchModify: "#/components/schemas/BatchModifyAction"
+          updateLeverage: "#/components/schemas/UpdateLeverageAction"
+          updateIsolatedMargin: "#/components/schemas/UpdateIsolatedMarginAction"
+          usdSend: "#/components/schemas/UsdSendAction"
+          spotSend: "#/components/schemas/SpotSendAction"
+          withdraw3: "#/components/schemas/Withdraw3Action"
+          usdClassTransfer: "#/components/schemas/UsdClassTransferAction"
+          sendAsset: "#/components/schemas/SendAssetAction"
+          cDeposit: "#/components/schemas/CDepositAction"
+          cWithdraw: "#/components/schemas/CWithdrawAction"
+          tokenDelegate: "#/components/schemas/TokenDelegateAction"
+          vaultTransfer: "#/components/schemas/VaultTransferAction"
+          approveAgent: "#/components/schemas/ApproveAgentAction"
+          approveBuilderFee: "#/components/schemas/ApproveBuilderFeeAction"
+          twapOrder: "#/components/schemas/TwapOrderAction"
+          twapCancel: "#/components/schemas/TwapCancelAction"
+          reserveRequestWeight: "#/components/schemas/ReserveRequestWeightAction"
+          noop: "#/components/schemas/NoopAction"
+
+    # Action: order
+    OrderAction:
+      type: object
+      title: "Order — place a new order"
+      description: Place a new order
+      properties:
+        type:
+          type: string
+          enum: [order]
+        order:
+          $ref: "#/components/schemas/Order"
+      required: [type, order]
+
+    Order:
+      type: object
+      description: |
+        Order parameters.
+
+        For limit orders, TIF (time-in-force) sets the behavior of the order upon first
+        hitting the book:
+        - ALO (add liquidity only, i.e. "post only") will be canceled instead of immediately matching.
+        - IOC (immediate or cancel) will have the unfilled part canceled instead of resting.
+        - GTC (good til canceled) orders have no special behavior.
+
+        Client Order ID (cloid) is an optional 128 bit hex string, e.g.
+        `0x1234567890abcdef1234567890abcdef`.
+      properties:
+        a:
+          type: integer
+          description: Asset index
+        b:
+          type: boolean
+          description: isBuy
+        p:
+          $ref: "#/components/schemas/FloatString"
+          description: Price
+        s:
+          $ref: "#/components/schemas/FloatString"
+          description: Size
+        r:
+          type: boolean
+          description: reduceOnly
+        t:
+          $ref: "#/components/schemas/OrderType"
+        c:
+          oneOf:
+            - type: string
+              pattern: "^0x[0-9a-fA-F]{32}$"
+              description: 128-bit hex string prefixed by 0x
+            - type: "null"
+          description: Optional client order ID (cloid)
+      required: [a, b, p, s, r, t]
+
+    OrderType:
+      oneOf:
+        - $ref: "#/components/schemas/LimitOrderParams"
+        - $ref: "#/components/schemas/TriggerOrderParams"
+
+    LimitOrderParams:
+      type: object
+      description: Limit order parameters, wrapped under key 'limit'
+      properties:
+        limit:
+          type: object
+          properties:
+            tif:
+              type: string
+              description: Time-in-force (GTC, IOC, or ALO/post-only)
+              enum: [gtc, ioc, alo]
+          required: [tif]
+      required: [limit]
+
+    TriggerOrderParams:
+      type: object
+      description: Trigger order parameters, wrapped under key 'trigger'
+      properties:
+        trigger:
+          type: object
+          properties:
+            triggerPx:
+              $ref: "#/components/schemas/FloatString"
+            isMarket:
+              type: boolean
+            triggerDirection:
+              type: string
+              enum: [above, below]
+            tif:
+              type: string
+              enum: [gtc, ioc, fok]
+            tpsl:
+              oneOf:
+                - type: string
+                  enum: [tp, sl]
+                - type: "null"
+          required: [triggerPx, isMarket]
+      required: [trigger]
+
+    # Action: cancel (by numeric order id)
+    CancelAction:
+      type: object
+      title: "Cancel — by order id"
+      description: Cancel an order by numeric order ID
+      properties:
+        type:
+          type: string
+          enum: [cancel]
+        cancel:
+          type: object
+          properties:
+            a:
+              type: integer
+              description: Asset index
+            o:
+              type: integer
+              description: Order ID
+          required: [a, o]
+      required: [type, cancel]
+
+    # Action: cancelByCloid (by client order id)
+    CancelByCloidAction:
+      type: object
+      title: "Cancel by Cloid — by client order id"
+      description: Cancel an order by client order ID
+      properties:
+        type:
+          type: string
+          enum: [cancelByCloid]
+        cancel:
+          type: object
+          properties:
+            a:
+              type: integer
+              description: Asset index
+            c:
+              type: string
+              description: Client order ID (hex string)
+          required: [a, c]
+      required: [type, cancel]
+
+    # Action: scheduleCancel (cancel after delay)
+    ScheduleCancelAction:
+      type: object
+      title: "Schedule Cancel — cancel after delay"
+      description: Schedule a cancel for an asset's open orders after a delay
+      properties:
+        type:
+          type: string
+          enum: [scheduleCancel]
+        scheduleCancel:
+          type: object
+          properties:
+            a:
+              type: integer
+              description: Asset index
+            millisInFuture:
+              type: integer
+              description: Milliseconds from now to schedule the cancel
+          required: [a, millisInFuture]
+      required: [type, scheduleCancel]
+
+    # Action: modify (update price/size of existing order)
+    ModifyAction:
+      type: object
+      title: "Modify — change an existing order"
+      description: Modify an existing order's parameters
+      properties:
+        type:
+          type: string
+          enum: [modify]
+        modify:
+          type: object
+          properties:
+            a:
+              type: integer
+              description: Asset index
+            o:
+              type: integer
+              description: Order ID to modify
+            p:
+              $ref: "#/components/schemas/FloatString"
+              description: New price (optional)
+            s:
+              $ref: "#/components/schemas/FloatString"
+              description: New size (optional)
+            r:
+              type: boolean
+              description: New reduceOnly (optional)
+          required: [a, o]
+      required: [type, modify]
+
+    # Action: batchModify
+    BatchModifyAction:
+      type: object
+      title: "Batch Modify — change multiple orders"
+      description: Modify multiple orders in a single request
+      properties:
+        type:
+          type: string
+          enum: [batchModify]
+        modifies:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModifyAction"
+          minItems: 1
+      required: [type, modifies]
+
+    # Action: updateLeverage
+    UpdateLeverageAction:
+      type: object
+      title: "Update Leverage — change mode/value"
+      description: Update leverage mode/value for a coin
+      properties:
+        type:
+          type: string
+          enum: [updateLeverage]
+        updateLeverage:
+          type: object
+          properties:
+            coin:
+              type: string
+            leverageType:
+              type: string
+              enum: [cross, isolated]
+            value:
+              type: number
+          required: [coin, leverageType]
+      required: [type, updateLeverage]
+
+    # Action: updateIsolatedMargin
+    UpdateIsolatedMarginAction:
+      type: object
+      title: "Update Isolated Margin — adjust margin"
+      description: Increase or decrease isolated margin for a coin
+      properties:
+        type:
+          type: string
+          enum: [updateIsolatedMargin]
+        updateIsolatedMargin:
+          type: object
+          properties:
+            coin:
+              type: string
+            delta:
+              $ref: "#/components/schemas/FloatString"
+            isIncrease:
+              type: boolean
+          required: [coin, delta, isIncrease]
+      required: [type, updateIsolatedMargin]
+
+    # Action: usdSend
+    UsdSendAction:
+      type: object
+      title: "USD Send — send USDC to address"
+      description: Send USDC to another address
+      properties:
+        type:
+          type: string
+          enum: [usdSend]
+        usdSend:
+          type: object
+          properties:
+            destination:
+              type: string
+              description: Address in 42-character hexadecimal format
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [destination, amount]
+      required: [type, usdSend]
+
+    # Action: spotSend
+    SpotSendAction:
+      type: object
+      title: "Spot Send — send token to address"
+      description: Send a spot token to another address
+      properties:
+        type:
+          type: string
+          enum: [spotSend]
+        spotSend:
+          type: object
+          properties:
+            destination:
+              type: string
+              description: Address in 42-character hexadecimal format
+            token:
+              type: integer
+              description: Token index
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [destination, token, amount]
+      required: [type, spotSend]
+
+    # Action: withdraw3
+    Withdraw3Action:
+      type: object
+      title: "Withdraw — withdraw to external address"
+      description: Withdraw funds to an external address
+      properties:
+        type:
+          type: string
+          enum: [withdraw3]
+        withdraw3:
+          type: object
+          properties:
+            destination:
+              type: string
+            token:
+              type: integer
+              description: Token index
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [destination, token, amount]
+      required: [type, withdraw3]
+
+    # Action: usdClassTransfer
+    UsdClassTransferAction:
+      type: object
+      title: "USD Class Transfer — internal transfer"
+      description: Internal transfer of USD class balance between sub-accounts
+      properties:
+        type:
+          type: string
+          enum: [usdClassTransfer]
+        usdClassTransfer:
+          type: object
+          properties:
+            to:
+              type: string
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [to, amount]
+      required: [type, usdClassTransfer]
+
+    # Action: sendAsset (generic)
+    SendAssetAction:
+      type: object
+      title: "Send Asset — generic asset send"
+      description: Generic asset send
+      properties:
+        type:
+          type: string
+          enum: [sendAsset]
+        sendAsset:
+          type: object
+          properties:
+            asset:
+              type: integer
+            amount:
+              $ref: "#/components/schemas/FloatString"
+            destination:
+              type: string
+          required: [asset, amount, destination]
+      required: [type, sendAsset]
+
+    # Action: cDeposit
+    CDepositAction:
+      type: object
+      title: "Custody Deposit — bridge deposit"
+      description: Deposit collateral to chain bridge
+      properties:
+        type:
+          type: string
+          enum: [cDeposit]
+        cDeposit:
+          type: object
+          properties:
+            token:
+              type: integer
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [token, amount]
+      required: [type, cDeposit]
+
+    # Action: cWithdraw
+    CWithdrawAction:
+      type: object
+      title: "Custody Withdraw — bridge withdrawal"
+      description: Withdraw collateral via chain bridge
+      properties:
+        type:
+          type: string
+          enum: [cWithdraw]
+        cWithdraw:
+          type: object
+          properties:
+            token:
+              type: integer
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [token, amount]
+      required: [type, cWithdraw]
+
+    # Action: tokenDelegate
+    TokenDelegateAction:
+      type: object
+      title: "Token Delegate — approve delegate"
+      description: Delegate a token to another address
+      properties:
+        type:
+          type: string
+          enum: [tokenDelegate]
+        tokenDelegate:
+          type: object
+          properties:
+            token:
+              type: integer
+            delegate:
+              type: string
+            approved:
+              type: boolean
+          required: [token, delegate, approved]
+      required: [type, tokenDelegate]
+
+    # Action: vaultTransfer
+    VaultTransferAction:
+      type: object
+      title: "Vault Transfer — deposit or withdraw"
+      description: Deposit to or withdraw from a vault
+      properties:
+        type:
+          type: string
+          enum: [vaultTransfer]
+        vaultTransfer:
+          type: object
+          properties:
+            vaultAddress:
+              type: string
+            direction:
+              type: string
+              enum: [deposit, withdraw]
+            amount:
+              $ref: "#/components/schemas/FloatString"
+          required: [vaultAddress, direction, amount]
+      required: [type, vaultTransfer]
+
+    # Action: approveAgent
+    ApproveAgentAction:
+      type: object
+      title: "Approve Agent — approve or revoke"
+      description: Approve or revoke an agent
+      properties:
+        type:
+          type: string
+          enum: [approveAgent]
+        approveAgent:
+          type: object
+          properties:
+            agent:
+              type: string
+            approved:
+              type: boolean
+          required: [agent, approved]
+      required: [type, approveAgent]
+
+    # Action: approveBuilderFee
+    ApproveBuilderFeeAction:
+      type: object
+      title: "Approve Builder Fee — set max fee"
+      description: Approve a builder fee schedule
+      properties:
+        type:
+          type: string
+          enum: [approveBuilderFee]
+        approveBuilderFee:
+          type: object
+          properties:
+            builder:
+              type: string
+            maxApprovalTenthsBp:
+              type: integer
+              description: Tenths of a basis point (1 = 0.001%)
+          required: [builder, maxApprovalTenthsBp]
+      required: [type, approveBuilderFee]
+
+    # Action: twapOrder
+    TwapOrderAction:
+      type: object
+      title: "TWAP Order — place time-sliced order"
+      description: Place a TWAP order
+      properties:
+        type:
+          type: string
+          enum: [twapOrder]
+        twapOrder:
+          type: object
+          properties:
+            order:
+              $ref: "#/components/schemas/Order"
+            numSlices:
+              type: integer
+            durationSeconds:
+              type: integer
+            sliceIntervalSeconds:
+              type: integer
+            randomizeSlices:
+              type: boolean
+          required: [order, numSlices, durationSeconds]
+      required: [type, twapOrder]
+
+    # Action: twapCancel
+    TwapCancelAction:
+      type: object
+      title: "TWAP Cancel — cancel TWAP order"
+      description: Cancel a TWAP order by id
+      properties:
+        type:
+          type: string
+          enum: [twapCancel]
+        twapCancel:
+          type: object
+          properties:
+            twapId:
+              type: integer
+          required: [twapId]
+      required: [type, twapCancel]
+
+    # Action: reserveRequestWeight
+    ReserveRequestWeightAction:
+      type: object
+      title: "Reserve Request Weight — reserve credits"
+      description: Reserve request weight (rate-limit credits)
+      properties:
+        type:
+          type: string
+          enum: [reserveRequestWeight]
+        reserveRequestWeight:
+          type: object
+          properties:
+            weight:
+              type: integer
+            durationSeconds:
+              type: integer
+          required: [weight]
+      required: [type, reserveRequestWeight]
+
+    # Action: noop
+    NoopAction:
+      type: object
+      title: "Noop — no operation"
+      description: No operation
+      properties:
+        type:
+          type: string
+          enum: [noop]
+      required: [type]
     # ---------- Shared primitives ----------
     FloatString:
       type: string
@@ -243,6 +992,7 @@ components:
     # ---------- /info: Requests ----------
     GossipRootIpsRequest:
       type: object
+      title: Gossip Root IPs
       description: |
         For non-validators looking for reliable seed peers. Request recently available
         peers to bootstrap the gossip network via the unified /info endpoint.
@@ -254,6 +1004,7 @@ components:
 
     AllMidsRequest:
       type: object
+      title: All Mids
       description: |
         Return mid prices for all actively traded coins.
         If an order book is empty, the last trade price is used as a fallback.
@@ -265,6 +1016,7 @@ components:
 
     OpenOrdersRequest:
       type: object
+      title: Open Orders
       description: Retrieve a user's open orders.
       required: [type, user]
       properties:
@@ -277,6 +1029,7 @@ components:
 
     FrontendOpenOrdersRequest:
       type: object
+      title: Frontend Open Orders
       description: |
         Retrieve a user's open orders with additional frontend-oriented fields
         (e.g., isTrigger, reduceOnly, orderType, triggerPx).
@@ -291,6 +1044,7 @@ components:
 
     UserFillsRequest:
       type: object
+      title: User Fills
       description: |
         Retrieve a user's most recent trade fills (up to 2,000).
         Optionally aggregate partial fills that occur at the same timestamp.
@@ -308,6 +1062,7 @@ components:
 
     UserFillsByTimeRequest:
       type: object
+      title: User Fills By Time
       description: |
         Retrieve a user's trade fills within a time range.
         At most 2,000 fills are returned per response, and only the
@@ -332,6 +1087,7 @@ components:
 
     UserRateLimitRequest:
       type: object
+      title: User Rate Limit
       description: Return the user's current rate-limit usage and capacity.
       required: [type, user]
       properties:
@@ -344,6 +1100,7 @@ components:
 
     OrderStatusRequest:
       type: object
+      title: Order Status
       description: Query order status by numeric order ID or client order ID (cloid).
       required: [user, type, oid]
       properties:
@@ -361,6 +1118,7 @@ components:
 
     L2BookRequest:
       type: object
+      title: L2 Book
       description: |
         Retrieve an L2 order book snapshot for a given coin.
         At most 20 levels are returned per side. Optional aggregation
@@ -381,6 +1139,7 @@ components:
 
     CandleSnapshotRequest:
       type: object
+      title: Candle Snapshot
       description: |
         Retrieve OHLCV candles for a coin and interval.
         Only the most recent 5,000 candles are available.
@@ -397,7 +1156,23 @@ components:
               type: string
             interval:
               type: string
-              enum: ["1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "8h", "12h", "1d", "3d", "1w", "1M"]
+              enum:
+                [
+                  "1m",
+                  "3m",
+                  "5m",
+                  "15m",
+                  "30m",
+                  "1h",
+                  "2h",
+                  "4h",
+                  "8h",
+                  "12h",
+                  "1d",
+                  "3d",
+                  "1w",
+                  "1M",
+                ]
             startTime:
               type: integer
             endTime:
@@ -405,6 +1180,7 @@ components:
 
     PortfolioRequest:
       type: object
+      title: Portfolio
       description: |
         Retrieve summarized portfolio time-series for multiple intervals
         (e.g., day/week/month/allTime and perp variants).
@@ -419,6 +1195,7 @@ components:
 
     SpotMetaRequest:
       type: object
+      title: Spot Meta
       description: Retrieve spot token metadata and spot universe definitions.
       required: [type]
       properties:
@@ -428,6 +1205,7 @@ components:
 
     SpotMetaAndAssetCtxsRequest:
       type: object
+      title: Spot Meta And Asset Contexts
       description: |
         Retrieve a tuple of [SpotMetaResponse, Spot asset contexts], where
         asset contexts include mark, mid, previous day price, and 24h notional volume.
@@ -439,6 +1217,7 @@ components:
 
     SpotClearinghouseStateRequest:
       type: object
+      title: Spot Clearinghouse State
       description: Retrieve a user's spot clearinghouse state (balances and totals).
       required: [type, user]
       properties:
@@ -451,6 +1230,7 @@ components:
 
     PerpMetaRequest:
       type: object
+      title: Perp Meta
       description: |
         Retrieve perpetual metadata including the perp universe and margin tables.
         The optional `dex` selects which perp market; empty string means the default.
@@ -465,6 +1245,7 @@ components:
 
     PerpMetaAndAssetCtxsRequest:
       type: object
+      title: Perp Meta And Asset Contexts
       description: |
         Retrieve a tuple of [Perp universe, Perp asset contexts] including funding,
         mark/mid prices, impact prices, open interest, oracle and premium data.
@@ -476,6 +1257,7 @@ components:
 
     PerpClearinghouseStateRequest:
       type: object
+      title: Perp Clearinghouse State
       description: Retrieve a user's perp clearinghouse account state and summaries.
       required: [type, user]
       properties:
@@ -502,7 +1284,7 @@ components:
     AllMidsResponse:
       type: object
       additionalProperties:
-        $ref: '#/components/schemas/FloatString'
+        $ref: "#/components/schemas/FloatString"
 
     OpenOrdersResponse:
       type: array
@@ -612,12 +1394,12 @@ components:
     UserFillsResponse:
       type: array
       items:
-        $ref: '#/components/schemas/UserFill'
+        $ref: "#/components/schemas/UserFill"
 
     UserFillsByTimeResponse:
       type: array
       items:
-        $ref: '#/components/schemas/UserFill'
+        $ref: "#/components/schemas/UserFill"
 
     UserRateLimitResponse:
       type: object
@@ -658,7 +1440,7 @@ components:
                     cloid:
                       oneOf:
                         - type: integer
-                        - type: 'null'
+                        - type: "null"
                 status:
                   enum: [open, filled, cancelled, rejected]
                 statusTimestamp: { type: integer }
@@ -705,7 +1487,7 @@ components:
     CandleSnapshotResponse:
       type: array
       items:
-        $ref: '#/components/schemas/Candle'
+        $ref: "#/components/schemas/Candle"
 
     PortfolioResponse:
       type: array
@@ -716,7 +1498,17 @@ components:
         items:
           oneOf:
             - type: string
-              enum: [day, week, month, allTime, perpDay, perpWeek, perpMonth, perpAllTime]
+              enum:
+                [
+                  day,
+                  week,
+                  month,
+                  allTime,
+                  perpDay,
+                  perpWeek,
+                  perpMonth,
+                  perpAllTime,
+                ]
             - type: object
               required: [accountValueHistory, pnlHistory, vlm]
               properties:
@@ -751,7 +1543,17 @@ components:
           type: array
           items:
             type: object
-            required: [name, szDecimals, weiDecimals, index, tokenId, isCanonical, evmContract, fullName]
+            required:
+              [
+                name,
+                szDecimals,
+                weiDecimals,
+                index,
+                tokenId,
+                isCanonical,
+                evmContract,
+                fullName,
+              ]
             properties:
               name: { type: string }
               szDecimals: { type: integer }
@@ -762,11 +1564,11 @@ components:
               evmContract:
                 oneOf:
                   - type: string
-                  - type: 'null'
+                  - type: "null"
               fullName:
                 oneOf:
                   - type: string
-                  - type: 'null'
+                  - type: "null"
         universe:
           type: array
           items:
@@ -788,7 +1590,7 @@ components:
       maxItems: 2
       items:
         oneOf:
-          - $ref: '#/components/schemas/SpotMetaResponse'
+          - $ref: "#/components/schemas/SpotMetaResponse"
           - type: array
             items:
               type: object
@@ -874,7 +1676,18 @@ components:
           - type: array
             items:
               type: object
-              required: [dayNtlVlm, funding, impactPxs, markPx, midPx, openInterest, oraclePx, premium, prevDayPx]
+              required:
+                [
+                  dayNtlVlm,
+                  funding,
+                  impactPxs,
+                  markPx,
+                  midPx,
+                  openInterest,
+                  oraclePx,
+                  premium,
+                  prevDayPx,
+                ]
               properties:
                 dayNtlVlm: { type: string }
                 funding: { type: string }
@@ -892,7 +1705,15 @@ components:
 
     PerpClearinghouseStateResponse:
       type: object
-      required: [assetPositions, crossMaintenanceMarginUsed, crossMarginSummary, marginSummary, time, withdrawable]
+      required:
+        [
+          assetPositions,
+          crossMaintenanceMarginUsed,
+          crossMarginSummary,
+          marginSummary,
+          time,
+          withdrawable,
+        ]
       properties:
         assetPositions:
           type: array
@@ -902,7 +1723,20 @@ components:
             properties:
               position:
                 type: object
-                required: [coin, cumFunding, entryPx, leverage, liquidationPx, marginUsed, maxLeverage, positionValue, returnOnEquity, szi, unrealizedPnl]
+                required:
+                  [
+                    coin,
+                    cumFunding,
+                    entryPx,
+                    leverage,
+                    liquidationPx,
+                    marginUsed,
+                    maxLeverage,
+                    positionValue,
+                    returnOnEquity,
+                    szi,
+                    unrealizedPnl,
+                  ]
                 properties:
                   coin: { type: string }
                   cumFunding:

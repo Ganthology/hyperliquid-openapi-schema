@@ -254,6 +254,9 @@ components:
 
     AllMidsRequest:
       type: object
+      description: |
+        Return mid prices for all actively traded coins.
+        If an order book is empty, the last trade price is used as a fallback.
       required: [type]
       properties:
         type:
@@ -262,6 +265,7 @@ components:
 
     OpenOrdersRequest:
       type: object
+      description: Retrieve a user's open orders.
       required: [type, user]
       properties:
         type:
@@ -273,6 +277,9 @@ components:
 
     FrontendOpenOrdersRequest:
       type: object
+      description: |
+        Retrieve a user's open orders with additional frontend-oriented fields
+        (e.g., isTrigger, reduceOnly, orderType, triggerPx).
       required: [type, user]
       properties:
         type:
@@ -284,6 +291,9 @@ components:
 
     UserFillsRequest:
       type: object
+      description: |
+        Retrieve a user's most recent trade fills (up to 2,000).
+        Optionally aggregate partial fills that occur at the same timestamp.
       required: [type, user]
       properties:
         type:
@@ -298,6 +308,10 @@ components:
 
     UserFillsByTimeRequest:
       type: object
+      description: |
+        Retrieve a user's trade fills within a time range.
+        At most 2,000 fills are returned per response, and only the
+        10,000 most recent fills are available.
       required: [type, user, startTime]
       properties:
         type:
@@ -318,6 +332,7 @@ components:
 
     UserRateLimitRequest:
       type: object
+      description: Return the user's current rate-limit usage and capacity.
       required: [type, user]
       properties:
         type:
@@ -329,6 +344,7 @@ components:
 
     OrderStatusRequest:
       type: object
+      description: Query order status by numeric order ID or client order ID (cloid).
       required: [user, type, oid]
       properties:
         user:
@@ -345,6 +361,10 @@ components:
 
     L2BookRequest:
       type: object
+      description: |
+        Retrieve an L2 order book snapshot for a given coin.
+        At most 20 levels are returned per side. Optional aggregation
+        controls are available via nSigFigs and mantissa.
       required: [type, coin]
       properties:
         type:
@@ -361,6 +381,9 @@ components:
 
     CandleSnapshotRequest:
       type: object
+      description: |
+        Retrieve OHLCV candles for a coin and interval.
+        Only the most recent 5,000 candles are available.
       required: [type, req]
       properties:
         type:
@@ -382,6 +405,9 @@ components:
 
     PortfolioRequest:
       type: object
+      description: |
+        Retrieve summarized portfolio time-series for multiple intervals
+        (e.g., day/week/month/allTime and perp variants).
       required: [type, user]
       properties:
         type:
@@ -393,6 +419,7 @@ components:
 
     SpotMetaRequest:
       type: object
+      description: Retrieve spot token metadata and spot universe definitions.
       required: [type]
       properties:
         type:
@@ -401,6 +428,9 @@ components:
 
     SpotMetaAndAssetCtxsRequest:
       type: object
+      description: |
+        Retrieve a tuple of [SpotMetaResponse, Spot asset contexts], where
+        asset contexts include mark, mid, previous day price, and 24h notional volume.
       required: [type]
       properties:
         type:
@@ -409,6 +439,7 @@ components:
 
     SpotClearinghouseStateRequest:
       type: object
+      description: Retrieve a user's spot clearinghouse state (balances and totals).
       required: [type, user]
       properties:
         type:
@@ -420,6 +451,9 @@ components:
 
     PerpMetaRequest:
       type: object
+      description: |
+        Retrieve perpetual metadata including the perp universe and margin tables.
+        The optional `dex` selects which perp market; empty string means the default.
       required: [type]
       properties:
         type:
@@ -431,6 +465,9 @@ components:
 
     PerpMetaAndAssetCtxsRequest:
       type: object
+      description: |
+        Retrieve a tuple of [Perp universe, Perp asset contexts] including funding,
+        mark/mid prices, impact prices, open interest, oracle and premium data.
       required: [type]
       properties:
         type:
@@ -439,6 +476,7 @@ components:
 
     PerpClearinghouseStateRequest:
       type: object
+      description: Retrieve a user's perp clearinghouse account state and summaries.
       required: [type, user]
       properties:
         type:

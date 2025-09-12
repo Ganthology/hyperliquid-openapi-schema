@@ -45,6 +45,7 @@ paths:
         - `metaAndAssetCtxs`: Retrieve perps universe and per-asset contexts (funding, OI, prices).
         - `clearinghouseState`: Retrieve a user's perps clearinghouse account state and summaries.
         - `gossipRootIps`: Retrieve recently available seed peer IP addresses to bootstrap gossip.
+        - `validatorSummaries`: Retrieve comprehensive summaries of all validators including stake, commission, and performance statistics.
       requestBody:
         required: true
         content:
@@ -75,6 +76,7 @@ paths:
                   - $ref: "#/components/schemas/PerpMetaAndAssetCtxsResponse"
                   - $ref: "#/components/schemas/PerpClearinghouseStateResponse"
                   - $ref: "#/components/schemas/GossipRootIpsResponse"
+                  - $ref: "#/components/schemas/ValidatorSummariesResponse"
         "400":
           description: Bad request
         "429":
@@ -192,6 +194,7 @@ components:
               metaAndAssetCtxs,
               clearinghouseState,
               gossipRootIps,
+              validatorSummaries,
             ]
           x-enumNames:
             [
@@ -212,6 +215,7 @@ components:
               PerpMetaAndAssetCtxs,
               PerpClearinghouseState,
               GossipRootIps,
+              ValidatorSummaries,
             ]
           x-enumDescriptions:
             [
@@ -232,6 +236,7 @@ components:
               "Retrieve perps universe and asset contexts",
               "Retrieve a user's perps clearinghouse state",
               "Retrieve recent seed peer IPs for gossip",
+              "Retrieve summaries of all validators including their details, stake information, and performance statistics",
             ]
           oneOf:
             - const: allMids
@@ -285,6 +290,9 @@ components:
             - const: gossipRootIps
               title: Gossip Root IPs
               description: Recently available seed peer IPs for gossip
+            - const: validatorSummaries
+              title: Validator Summaries
+              description: Retrieve summaries of all validators including their details, stake information, and performance statistics
       required: [type]
       oneOf:
         - $ref: "#/components/schemas/AllMidsRequest"
@@ -304,6 +312,7 @@ components:
         - $ref: "#/components/schemas/PerpMetaAndAssetCtxsRequest"
         - $ref: "#/components/schemas/PerpClearinghouseStateRequest"
         - $ref: "#/components/schemas/GossipRootIpsRequest"
+        - $ref: "#/components/schemas/ValidatorSummariesRequest"
       discriminator:
         propertyName: type
         mapping:
@@ -324,6 +333,7 @@ components:
           metaAndAssetCtxs: "#/components/schemas/PerpMetaAndAssetCtxsRequest"
           clearinghouseState: "#/components/schemas/PerpClearinghouseStateRequest"
           gossipRootIps: "#/components/schemas/GossipRootIpsRequest"
+          validatorSummaries: "#/components/schemas/ValidatorSummariesRequest"
     # ---------- /exchange: Request & Action union ----------
     ExchangeRequest:
       type: object
@@ -1002,6 +1012,19 @@ components:
           type: string
           enum: [gossipRootIps]
 
+    ValidatorSummariesRequest:
+      type: object
+      title: Validator Summaries
+      description: |
+        Request summaries of all validators including their details, stake information, 
+        and performance statistics via the unified /info endpoint.
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [validatorSummaries]
+          description: Must be "validatorSummaries"
+
     AllMidsRequest:
       type: object
       title: All Mids
@@ -1280,6 +1303,84 @@ components:
       items:
         type: string
         description: IP address (IPv4 or IPv6)
+
+    ValidatorSummariesResponse:
+      type: array
+      description: |
+        Array of validator summaries containing detailed information about each validator,
+        including their stake, commission, performance statistics, and operational status.
+      items:
+        type: object
+        properties:
+          validator:
+            type: string
+            description: Validator address in 42-character hexadecimal format
+          signer:
+            type: string
+            description: Signer address in 42-character hexadecimal format
+          name:
+            type: string
+            description: Validator name
+          description:
+            type: string
+            description: Validator description
+          nRecentBlocks:
+            type: integer
+            description: Number of recent blocks produced
+          stake:
+            type: integer
+            description: Total stake amount in smallest unit
+          isJailed:
+            type: boolean
+            description: Whether the validator is currently jailed
+          unjailableAfter:
+            type: [integer, "null"]
+            description: Timestamp when the validator can be unjailed, null if not jailed
+          isActive:
+            type: boolean
+            description: Whether the validator is currently active
+          commission:
+            type: string
+            description: Commission rate as a decimal string (e.g., "0.04" for 4%)
+          stats:
+            type: array
+            description: Performance statistics for different time periods
+            items:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                oneOf:
+                  - type: string
+                    enum: ["day", "week", "month"]
+                    description: Time period for the statistics
+                  - type: object
+                    properties:
+                      uptimeFraction:
+                        type: string
+                        description: Uptime as a decimal fraction (e.g., "1.0" for 100%)
+                      predictedApr:
+                        type: string
+                        description: Predicted annual percentage rate as a decimal string
+                      nSamples:
+                        type: integer
+                        description: Number of samples used for statistics
+                    required:
+                      - uptimeFraction
+                      - predictedApr
+                      - nSamples
+        required:
+          - validator
+          - signer
+          - name
+          - description
+          - nRecentBlocks
+          - stake
+          - isJailed
+          - unjailableAfter
+          - isActive
+          - commission
+          - stats
 
     AllMidsResponse:
       type: object

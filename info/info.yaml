@@ -1852,3 +1852,155 @@ paths:
                 - time: 1736726400073
                   source: "commission"
                   totalAmount: "130.76445876"
+
+  # validatorSummaries
+  /info:
+    post:
+      summary: Get validator summaries
+      description: Retrieve summaries of all validators including their details, stake information, and performance statistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [validatorSummaries]
+              required:
+                - type
+            example:
+              type: validatorSummaries
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    validator:
+                      type: string
+                      description: Validator address in 42-character hexadecimal format
+                    signer:
+                      type: string
+                      description: Signer address in 42-character hexadecimal format
+                    name:
+                      type: string
+                      description: Validator name
+                    description:
+                      type: string
+                      description: Validator description
+                    nRecentBlocks:
+                      type: integer
+                      description: Number of recent blocks produced
+                    stake:
+                      type: integer
+                      description: Total stake amount in smallest unit
+                    isJailed:
+                      type: boolean
+                      description: Whether the validator is currently jailed
+                    unjailableAfter:
+                      type: [integer, "null"]
+                      description: Timestamp when the validator can be unjailed, null if not jailed
+                    isActive:
+                      type: boolean
+                      description: Whether the validator is currently active
+                    commission:
+                      type: string
+                      description: Commission rate as a decimal string (e.g., "0.04" for 4%)
+                    stats:
+                      type: array
+                      description: Performance statistics for different time periods
+                      items:
+                        type: array
+                        minItems: 2
+                        maxItems: 2
+                        items:
+                          oneOf:
+                            # First item: time period
+                            - type: string
+                              enum: ["day", "week", "month"]
+                            # Second item: statistics object
+                            - type: object
+                              properties:
+                                uptimeFraction:
+                                  type: string
+                                  description: Uptime as a decimal fraction (e.g., "1.0" for 100%)
+                                predictedApr:
+                                  type: string
+                                  description: Predicted annual percentage rate as a decimal string
+                                nSamples:
+                                  type: integer
+                                  description: Number of samples used for statistics
+                              required:
+                                - uptimeFraction
+                                - predictedApr
+                                - nSamples
+                  required:
+                    - validator
+                    - signer
+                    - name
+                    - description
+                    - nRecentBlocks
+                    - stake
+                    - isJailed
+                    - unjailableAfter
+                    - isActive
+                    - commission
+                    - stats
+              example:
+                - validator: "0x000000000056f99d36b6f2e0c51fd41496bbacb8"
+                  signer: "0x0000000008b0b558419582041f85740344ae8fde"
+                  name: "ValiDAO"
+                  description: "The People's Validator. Zero seed oils. Yours truly. https://validao.xyz"
+                  nRecentBlocks: 6
+                  stake: 629361369497189
+                  isJailed: false
+                  unjailableAfter: null
+                  isActive: true
+                  commission: "0.04"
+                  stats:
+                    - ["day", {
+                        "uptimeFraction": "1.0",
+                        "predictedApr": "0.0216167826",
+                        "nSamples": 1440
+                      }]
+                    - ["week", {
+                        "uptimeFraction": "1.0",
+                        "predictedApr": "0.0216167826",
+                        "nSamples": 10080
+                      }]
+                    - ["month", {
+                        "uptimeFraction": "1.0",
+                        "predictedApr": "0.0216167826",
+                        "nSamples": 43190
+                      }]
+                - validator: "0x15458aed3c7a49b215fbfa863c6ff550c31e1a31"
+                  signer: "0x21d50a1c2e70b2b4b25516c744da7f1de760b2ec"
+                  name: "B-Harvest"
+                  description: "Provides secure validation services for dPoS networks(https://bharvest.io)"
+                  nRecentBlocks: 6
+                  stake: 567706292364350
+                  isJailed: false
+                  unjailableAfter: null
+                  isActive: true
+                  commission: "0.05"
+                  stats:
+                    - ["day", {
+                        "uptimeFraction": "1.0",
+                        "predictedApr": "0.0213916078",
+                        "nSamples": 1440
+                      }]
+                    - ["week", {
+                        "uptimeFraction": "1.0",
+                        "predictedApr": "0.0213916078",
+                        "nSamples": 10080
+                      }]
+                    - ["month", {
+                        "uptimeFraction": "0.9992127807",
+                        "predictedApr": "0.0213747679",
+                        "nSamples": 43190
+                      }]

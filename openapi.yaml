@@ -45,6 +45,7 @@ paths:
         - `metaAndAssetCtxs`: Retrieve perps universe and per-asset contexts (funding, OI, prices).
         - `clearinghouseState`: Retrieve a user's perps clearinghouse account state and summaries.
         - `gossipRootIps`: Retrieve recently available seed peer IP addresses to bootstrap gossip.
+        - `validatorSummaries`: Retrieve comprehensive summaries of all validators including stake, commission, and performance statistics.
       requestBody:
         required: true
         content:
